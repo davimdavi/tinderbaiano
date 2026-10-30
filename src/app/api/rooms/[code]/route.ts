@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
-import { getRoomSnapshot, isRoomMember } from "@/lib/rooms/service";
+import { getRoomSnapshot, getUserSwipedAppids, isRoomMember } from "@/lib/rooms/service";
 
 export async function GET(
   _request: Request,
@@ -17,6 +17,9 @@ export async function GET(
     return NextResponse.json({ error: "Sala não encontrada." }, { status: 404 });
   }
   const isMember = await isRoomMember(snapshot.room.id, session.userId);
+  const mySwipedAppids = isMember
+    ? await getUserSwipedAppids(snapshot.room.id, session.userId)
+    : [];
 
-  return NextResponse.json({ ...snapshot, isMember });
+  return NextResponse.json({ ...snapshot, isMember, mySwipedAppids });
 }

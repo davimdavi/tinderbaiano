@@ -7,6 +7,8 @@ import type { RoomSnapshot } from "@/lib/rooms/service";
 import { subscribeToRoom } from "@/lib/supabase/realtime";
 import { Button } from "@/components/ui/Button";
 import PoolCuration from "./PoolCuration";
+import { SwipingPhase } from "./SwipingPhase";
+import { WinnerReveal } from "./WinnerReveal";
 
 const STATUS_LABEL: Record<string, string> = {
   curating_pool: "Montando o pool",
@@ -21,25 +23,35 @@ export default function RoomView({
   initialSnapshot,
   initialIsMember,
   myLibrary,
+  initialMySwipedAppids,
 }: {
   code: string;
   currentUserId: string;
   initialSnapshot: RoomSnapshot;
   initialIsMember: boolean;
   myLibrary: OwnedGameWithMeta[];
+  initialMySwipedAppids: number[];
 }) {
   const [snapshot, setSnapshot] = useState(initialSnapshot);
   const [isMember, setIsMember] = useState(initialIsMember);
   const [onlineIds, setOnlineIds] = useState<string[]>([]);
   const [joining, setJoining] = useState(false);
   const [copyLabel, setCopyLabel] = useState("Copiar código");
+  const [mySwipedAppids, setMySwipedAppids] = useState(initialMySwipedAppids);
+  const [swipeRound, setSwipeRound] = useState(0);
 
   const refetch = useCallback(async () => {
     const res = await fetch(`/api/rooms/${code}`);
     if (!res.ok) return;
     const data = await res.json();
-    setSnapshot({ room: data.room, members: data.members, pool: data.pool });
+    setSnapshot({
+      room: data.room,
+      members: data.members,
+      pool: data.pool,
+      matches: data.matches,
+    });
     setIsMember(data.isMember);
+    setMySwipedAppids(data.mySwipedAppids ?? []);
   }, [code]);
 
   useEffect(() => {
@@ -51,6 +63,22 @@ export default function RoomView({
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMember, snapshot.room.id, currentUserId]);
+
+  // Rede de segurança além do Realtime: a entrega de eventos nem sempre é
+  // instantânea, então re-busca o snapshot de tempos em tempos enquanto a sala
+  // está ativa, pra ninguém ficar preso numa tela desatualizada.
+  useEffect(() => {
+    if (!isMember || snapshot.room.status === "finished") return;
+    const interval = setInterval(refetch, 4000);
+    return () => clearInterval(interval);
+  }, [isMember, snapshot.room.status, refetch]);
+
+  async function handleSwipeRetry() {
+    await fetch(`/api/rooms/${code}/swipe/retry`, { method: "POST" }).catch(() => {});
+    setMySwipedAppids([]);
+    setSwipeRound((n) => n + 1);
+    await refetch();
+  }
 
   const poolAppids = useMemo(
     () => new Set(snapshot.pool.map((g) => g.appid)),
@@ -239,14 +267,48 @@ export default function RoomView({
               onAdded={refetch}
             />
           </>
+        ) : snapshot.room.status === "swiping" ? (
+          <SwipingPhase
+            key={swipeRound}
+            code={code}
+            pool={snapshot.pool}
+            members={snapshot.members}
+            matches={snapshot.matches}
+            currentUserId={currentUserId}
+            initialSwipedAppids={mySwipedAppids}
+            onRetry={handleSwipeRetry}
+          />
+        ) : snapshot.room.status === "finished" && snapshot.matches[0] ? (
+          <WinnerReveal game={snapshot.matches[0]} />
         ) : (
           <div className="rounded-2xl bg-white/10 p-8 text-center">
-            <p className="text-lg font-semibold">
-              {STATUS_LABEL[snapshot.room.status] ?? snapshot.room.status} — em breve!
+            <p className="font-display text-lg font-bold">
+              Deu match em {snapshot.matches.length} jogo(s)! 🎉
             </p>
             <p className="mt-2 text-sm text-white/70">
-              Essa fase ainda está sendo construída.
+              A fase de mata-mata ainda está sendo construída — por enquanto, aqui está
+              o que bateu o olho de todo mundo:
             </p>
+            <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {snapshot.matches.map((game) => (
+                <li
+                  key={game.appid}
+                  className="flex items-center gap-3 rounded-xl bg-white/10 p-2.5 text-left"
+                >
+                  {game.headerImage || game.iconUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={game.headerImage ?? game.iconUrl ?? undefined}
+                      alt=""
+                      className="h-9 w-14 rounded-md object-cover"
+                    />
+                  ) : (
+                    <div className="h-9 w-14 rounded-md bg-white/20" />
+                  )}
+                  <p className="text-sm font-semibold">{game.name}</p>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>

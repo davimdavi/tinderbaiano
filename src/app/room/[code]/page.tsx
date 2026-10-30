@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
-import { getRoomSnapshot, isRoomMember } from "@/lib/rooms/service";
+import {
+  getRoomSnapshot,
+  getUserSwipedAppids,
+  isRoomMember,
+} from "@/lib/rooms/service";
 import { getOwnedGamesForUser } from "@/lib/steam/library";
 import RoomView from "./RoomView";
 
@@ -28,6 +32,9 @@ export default async function RoomPage({
 
   const isMember = await isRoomMember(snapshot.room.id, session.userId);
   const myLibrary = isMember ? await getOwnedGamesForUser(session.userId) : [];
+  const mySwipedAppids = isMember
+    ? await getUserSwipedAppids(snapshot.room.id, session.userId)
+    : [];
 
   return (
     <RoomView
@@ -36,6 +43,7 @@ export default async function RoomPage({
       initialSnapshot={snapshot}
       initialIsMember={isMember}
       myLibrary={myLibrary}
+      initialMySwipedAppids={mySwipedAppids}
     />
   );
 }

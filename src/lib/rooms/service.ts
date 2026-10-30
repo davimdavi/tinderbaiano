@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { generateRoomCode } from "@/lib/rooms/code";
-import type { DbRoom, PoolGameView, RoomMemberView } from "@/lib/types";
+import type { DbRoom, MatchedGameView, PoolGameView, RoomMemberView } from "@/lib/types";
 
 export async function createRoom(hostUserId: string): Promise<{ id: string; code: string }> {
   const admin = getSupabaseAdmin();
@@ -210,10 +210,16 @@ type PoolRow = {
   users: { persona_name: string | null } | null;
 };
 
+type MatchRow = {
+  appid: number;
+  games: { name: string; icon_url: string | null; header_image: string | null } | null;
+};
+
 export type RoomSnapshot = {
   room: DbRoom;
   members: RoomMemberView[];
   pool: PoolGameView[];
+  matches: MatchedGameView[];
 };
 
 export async function getRoomSnapshot(code: string): Promise<RoomSnapshot | null> {
@@ -229,12 +235,24 @@ export async function getRoomSnapshot(code: string): Promise<RoomSnapshot | null
     .returns<MemberRow[]>();
   if (membersError) throw new Error(`Falha ao buscar membros: ${membersError.message}`);
 
+  const { data: swipeRows, error: swipesError } = await admin
+    .from("swipes")
+    .select("user_id")
+    .eq("room_id", room.id);
+  if (swipesError) throw new Error(`Falha ao buscar swipes: ${swipesError.message}`);
+  const swipedCountByUser = new Map<string, number>();
+  for (const row of swipeRows ?? []) {
+    const userId = row.user_id as string;
+    swipedCountByUser.set(userId, (swipedCountByUser.get(userId) ?? 0) + 1);
+  }
+
   const members: RoomMemberView[] = (memberRows ?? []).map((row) => ({
     userId: row.user_id,
     personaName: row.users?.persona_name ?? null,
     avatarUrl: row.users?.avatar_url ?? null,
     isReady: row.is_ready,
     isHost: row.user_id === room.host_user_id,
+    swipedCount: swipedCountByUser.get(row.user_id) ?? 0,
   }));
 
   const { data: poolRows, error: poolError } = await admin
@@ -254,5 +272,142 @@ export async function getRoomSnapshot(code: string): Promise<RoomSnapshot | null
     addedByName: row.users?.persona_name ?? null,
   }));
 
-  return { room: room as DbRoom, members, pool };
+  const { data: matchRows, error: matchesError } = await admin
+    .from("room_matches")
+    .select("appid, games(name, icon_url, header_image)")
+    .eq("room_id", room.id)
+    .order("matched_at", { ascending: true })
+    .returns<MatchRow[]>();
+  if (matchesError) throw new Error(`Falha ao buscar matches: ${matchesError.message}`);
+
+  const matches: MatchedGameView[] = (matchRows ?? []).map((row) => ({
+    appid: row.appid,
+    name: row.games?.name ?? `App ${row.appid}`,
+    iconUrl: row.games?.icon_url ?? null,
+    headerImage: row.games?.header_image ?? null,
+  }));
+
+  return { room: room as DbRoom, members, pool, matches };
+}
+
+export async function getUserSwipedAppids(
+  roomId: string,
+  userId: string
+): Promise<number[]> {
+  const admin = getSupabaseAdmin();
+  const { data, error } = await admin
+    .from("swipes")
+    .select("appid")
+    .eq("room_id", roomId)
+    .eq("user_id", userId);
+  if (error) throw new Error(`Falha ao buscar seus swipes: ${error.message}`);
+  return (data ?? []).map((row) => row.appid as number);
+}
+
+export async function recordSwipe(
+  roomId: string,
+  userId: string,
+  appid: number,
+  liked: boolean
+): Promise<void> {
+  const admin = getSupabaseAdmin();
+  const { error } = await admin
+    .from("swipes")
+    .upsert(
+      { room_id: roomId, user_id: userId, appid, liked, swiped_at: new Date().toISOString() },
+      { onConflict: "room_id,user_id,appid" }
+    );
+  if (error) throw new Error(`Falha ao gravar swipe: ${error.message}`);
+
+  if (liked) {
+    await maybeRecordMatch(roomId, appid);
+  }
+  await maybeFinalizeSwiping(roomId);
+}
+
+async function maybeRecordMatch(roomId: string, appid: number): Promise<void> {
+  const admin = getSupabaseAdmin();
+
+  const { count: memberCount } = await admin
+    .from("room_members")
+    .select("user_id", { count: "exact", head: true })
+    .eq("room_id", roomId);
+  if (!memberCount) return;
+
+  const { count: likedCount } = await admin
+    .from("swipes")
+    .select("user_id", { count: "exact", head: true })
+    .eq("room_id", roomId)
+    .eq("appid", appid)
+    .eq("liked", true);
+  if (!likedCount || likedCount < memberCount) return;
+
+  await admin
+    .from("room_matches")
+    .upsert({ room_id: roomId, appid }, { onConflict: "room_id,appid", ignoreDuplicates: true });
+}
+
+/**
+ * Quando todo mundo da sala já swipou todos os jogos do pool, decide o que acontece:
+ * 1 match -> termina a sala com esse jogo vencedor; 2+ matches -> vai pro mata-mata;
+ * 0 matches -> fica em 'swiping' mesmo (o cliente mostra a tela de "tenta de novo",
+ * já que ninguém bateu o olho em nada).
+ */
+async function maybeFinalizeSwiping(roomId: string): Promise<void> {
+  const admin = getSupabaseAdmin();
+
+  const { data: room } = await admin
+    .from("rooms")
+    .select("status")
+    .eq("id", roomId)
+    .single();
+  if (!room || room.status !== "swiping") return;
+
+  const { count: poolCount } = await admin
+    .from("room_pool_games")
+    .select("appid", { count: "exact", head: true })
+    .eq("room_id", roomId);
+  if (!poolCount) return;
+
+  const { data: members } = await admin
+    .from("room_members")
+    .select("user_id")
+    .eq("room_id", roomId);
+  if (!members || members.length === 0) return;
+
+  const { data: swipeRows } = await admin
+    .from("swipes")
+    .select("user_id")
+    .eq("room_id", roomId);
+  const swipedCountByUser = new Map<string, number>();
+  for (const row of swipeRows ?? []) {
+    const userId = row.user_id as string;
+    swipedCountByUser.set(userId, (swipedCountByUser.get(userId) ?? 0) + 1);
+  }
+
+  const allDone = members.every(
+    (m) => (swipedCountByUser.get(m.user_id as string) ?? 0) >= poolCount
+  );
+  if (!allDone) return;
+
+  const { count: matchCount } = await admin
+    .from("room_matches")
+    .select("appid", { count: "exact", head: true })
+    .eq("room_id", roomId);
+
+  if (matchCount === 1) {
+    await admin.from("rooms").update({ status: "finished" }).eq("id", roomId);
+  } else if (matchCount && matchCount >= 2) {
+    await admin.from("rooms").update({ status: "bracket" }).eq("id", roomId);
+  }
+}
+
+/**
+ * Limpa todos os swipes da sala (pra tentar de novo depois de "ninguém bateu o olho
+ * em nada"). Só faz sentido quando a sala ainda está em 'swiping' e sem matches.
+ */
+export async function resetSwipes(roomId: string): Promise<void> {
+  const admin = getSupabaseAdmin();
+  const { error } = await admin.from("swipes").delete().eq("room_id", roomId);
+  if (error) throw new Error(`Falha ao reiniciar os swipes: ${error.message}`);
 }

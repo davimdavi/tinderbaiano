@@ -67,6 +67,7 @@ export type RoomMemberView = {
   avatarUrl: string | null;
   isReady: boolean;
   isHost: boolean;
+  swipedCount: number;
 };
 
 export type PoolGameView = {
@@ -76,4 +77,25 @@ export type PoolGameView = {
   headerImage: string | null;
   addedByUserId: string | null;
   addedByName: string | null;
+};
+
+export type DbSwipe = {
+  room_id: string;
+  user_id: string;
+  appid: number;
+  liked: boolean;
+  swiped_at: string;
+};
+
+export type DbRoomMatch = {
+  room_id: string;
+  appid: number;
+  matched_at: string;
+};
+
+export type MatchedGameView = {
+  appid: number;
+  name: string;
+  iconUrl: string | null;
+  headerImage: string | null;
 };
