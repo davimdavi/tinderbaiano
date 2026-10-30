@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const STORAGE_KEY = "tb-theme";
@@ -15,9 +15,10 @@ const THEMES: { id: string; label: string; swatch: [string, string, string] }[] 
 
 /**
  * Seletor de tema flutuante — cada jogador escolhe a própria paleta (salva só no
- * navegador dele via localStorage, não afeta os outros). O script em layout.tsx já
- * aplica o tema salvo antes da primeira pintura, então aqui só sincronizamos o
- * estado visual do seletor com o que já está ativo.
+ * navegador dele via localStorage, não afeta os outros). Reaplica o tema salvo assim
+ * que monta (o servidor não tem como saber qual é, por isso o `suppressHydrationWarning`
+ * no <html>) — aceita um leve flash em vez de um <script beforeInteractive>, que
+ * conflitava com o render de Server Components no App Router.
  */
 export function ThemePicker() {
   const [open, setOpen] = useState(false);
@@ -32,6 +33,12 @@ export function ThemePicker() {
       return "fliperama";
     }
   });
+
+  useEffect(() => {
+    if (active === "fliperama") return;
+    document.documentElement.setAttribute("data-theme", active);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function selectTheme(id: string) {
     setActive(id);

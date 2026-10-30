@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { Panel } from "@/components/ui/Panel";
 
 export default function RoomActions() {
   const router = useRouter();
@@ -48,7 +49,10 @@ export default function RoomActions() {
   }
 
   return (
-    <div className="animate-rise mb-8 flex flex-col gap-3 rounded-2xl bg-white/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+    <Panel
+      accent="b"
+      className="mb-8 flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between"
+    >
       <div>
         <h2 className="font-display text-lg font-bold">Montar uma partida</h2>
         <p className="text-sm text-white/70">
@@ -65,7 +69,7 @@ export default function RoomActions() {
             onChange={(e) => setJoinCode(e.target.value)}
             placeholder="CÓDIGO"
             maxLength={6}
-            className="w-28 rounded-full bg-white/20 px-4 py-2.5 text-center text-sm font-bold uppercase tracking-widest text-white placeholder-white/50 outline-none transition-colors focus:bg-white/30"
+            className="font-numeric w-28 rounded-full bg-white/10 px-4 py-2.5 text-center text-sm font-bold uppercase tracking-widest text-white placeholder-white/40 outline-none transition-colors focus:bg-white/20"
           />
           <Button type="submit" disabled={joining} variant="accent-blue">
             {joining ? "Entrando..." : "Entrar"}
@@ -73,6 +77,6 @@ export default function RoomActions() {
         </form>
       </div>
       {error && <p className="text-sm text-red-300 sm:basis-full">{error}</p>}
-    </div>
+    </Panel>
   );
 }

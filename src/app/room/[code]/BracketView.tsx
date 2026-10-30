@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import type { BracketMatchView, BracketRound } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
+import { Panel } from "@/components/ui/Panel";
 
 // O número de confrontos de uma rodada já diz o que ela é (1 confronto só pode ser
 // a final, 2 só podem ser a semifinal etc.) — mais confiável do que tentar adivinhar
@@ -26,9 +27,9 @@ export function BracketView({
 }) {
   if (rounds.length === 0) {
     return (
-      <div className="rounded-2xl bg-white/10 p-8 text-center">
+      <Panel className="p-8 text-center">
         <p className="font-display text-lg font-bold">Montando o mata-mata...</p>
-      </div>
+      </Panel>
     );
   }
 
@@ -97,12 +98,12 @@ function BracketMatchCard({
   // Bye: só um jogo, já passou direto.
   if (!match.gameB) {
     return (
-      <div className="rounded-2xl bg-white/10 p-4 text-center">
+      <Panel className="p-4 text-center">
         <GameTile game={match.gameA} highlighted />
         <p className="mt-2 text-xs font-semibold" style={{ color: "var(--accent-a)" }}>
           passou direto (bye)
         </p>
-      </div>
+      </Panel>
     );
   }
 
@@ -121,7 +122,7 @@ function BracketMatchCard({
   const decided = match.status === "decided";
 
   return (
-    <div className="rounded-2xl bg-white/10 p-4">
+    <Panel accent={decided ? "a" : "b"} className="p-4">
       <div className="flex items-center gap-2">
         <GameTile
           game={match.gameA}
@@ -161,7 +162,7 @@ function BracketMatchCard({
             </Button>
           </div>
           {secondsLeft !== null && (
-            <p className="mt-2 text-center text-xs text-white/50">
+            <p className="font-numeric mt-2 text-center text-xs text-white/50">
               {secondsLeft}s pra decidir
             </p>
           )}
@@ -171,7 +172,7 @@ function BracketMatchCard({
           decidido
         </p>
       )}
-    </div>
+    </Panel>
   );
 }
 
@@ -213,7 +214,7 @@ function GameTile({
       </div>
       {typeof votes === "number" && votes > 0 && (
         <span
-          className="absolute right-1 top-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[10px] font-bold"
+          className="font-numeric absolute right-1 top-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[10px] font-bold"
           style={{ color: "var(--accent-a)" }}
         >
           {votes}

@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import type { MatchedGameView } from "@/lib/types";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { Panel } from "@/components/ui/Panel";
+import { GameArt } from "@/components/ui/GameArt";
 import { getThemeAccentColors } from "@/lib/theme";
 
 export function WinnerReveal({ game }: { game: MatchedGameView }) {
@@ -18,10 +20,8 @@ export function WinnerReveal({ game }: { game: MatchedGameView }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const image = game.headerImage ?? game.iconUrl;
-
   return (
-    <div className="flex flex-col items-center gap-5 rounded-3xl bg-white/10 p-8 text-center">
+    <Panel className="flex flex-col items-center gap-5 p-8 text-center">
       <motion.p
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -34,16 +34,14 @@ export function WinnerReveal({ game }: { game: MatchedGameView }) {
         initial={{ scale: 0.7, opacity: 0, rotate: -6 }}
         animate={{ scale: 1, opacity: 1, rotate: 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 18, delay: 0.15 }}
-        className="w-full max-w-xs overflow-hidden rounded-2xl shadow-2xl"
+        className="aspect-[2/3] w-56 overflow-hidden rounded-2xl shadow-2xl"
       >
-        {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt="" className="w-full object-cover" />
-        ) : (
-          <div className="flex h-40 items-center justify-center bg-white/10 text-white/40">
-            Sem imagem
-          </div>
-        )}
+        <GameArt
+          appid={game.appid}
+          headerImage={game.headerImage}
+          iconUrl={game.iconUrl}
+          className="h-full w-full object-cover"
+        />
       </motion.div>
       <motion.h2
         initial={{ opacity: 0, y: 8 }}
@@ -67,6 +65,6 @@ export function WinnerReveal({ game }: { game: MatchedGameView }) {
           Ver na Steam
         </ButtonLink>
       </motion.div>
-    </div>
+    </Panel>
   );
 }

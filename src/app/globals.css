@@ -1,20 +1,23 @@
 @import "tailwindcss";
 
 /*
-  Identidade visual: arcade moderno (não retrô) — fundo em gradiente, bordas e
-  sombras "chapadas" (tipo botão físico de fliperama), tipografia bold e
-  arredondada. 5 paletas trocáveis em tempo real via [data-theme] em <html>,
-  todas desenhadas com o mesmo esqueleto de tokens (fundo em 3 tons + 3 cores
-  de destaque A/B/C, cada uma com sua cor de texto legível por cima).
+  Identidade visual: "tela de fliperama" — o fundo (gradiente + textura de pontos)
+  é a sala ao redor, e cada tela vive dentro de um painel-moldura (borda grossa +
+  sombra chapada), como olhar pro monitor da máquina. Botão e painel compartilham
+  a mesma física; nada de vidro fosco. 5 paletas trocáveis em tempo real via
+  [data-theme], todas com o mesmo esqueleto de tokens (fundo em 3 tons + um tom de
+  painel mais escuro + 3 cores de destaque A/B/C, cada uma com sua tinta legível).
 */
 :root {
   --foreground: #ffffff;
   --shadow-color: rgba(10, 4, 28, 0.55);
 
-  /* Fliperama (padrão): roxo/magenta + amarelo, azul e rosa */
+  /* Fliperama (padrão): magenta-arcade + grape + void-indigo, com coin-yellow,
+     joystick-blue e ticket-pink de destaque. */
   --bg-1: #a21caf;
   --bg-2: #6b21a8;
   --bg-3: #1e1b4b;
+  --panel-bg: #0f0b28;
   --accent-a: #facc15;
   --accent-a-ink: #1e1b4b;
   --accent-b: #38bdf8;
@@ -27,6 +30,7 @@
   --bg-1: #1e1b4b;
   --bg-2: #312e81;
   --bg-3: #0c4a6e;
+  --panel-bg: #061e2e;
   --accent-a: #22d3ee;
   --accent-a-ink: #082f33;
   --accent-b: #f472b6;
@@ -39,6 +43,7 @@
   --bg-1: #ea580c;
   --bg-2: #be123c;
   --bg-3: #881337;
+  --panel-bg: #3c081a;
   --accent-a: #facc15;
   --accent-a-ink: #431407;
   --accent-b: #fb7185;
@@ -51,6 +56,7 @@
   --bg-1: #0f766e;
   --bg-2: #115e59;
   --bg-3: #164e63;
+  --panel-bg: #0a202a;
   --accent-a: #a3e635;
   --accent-a-ink: #1a2e05;
   --accent-b: #fb923c;
@@ -63,6 +69,7 @@
   --bg-1: #db2777;
   --bg-2: #a21caf;
   --bg-3: #6d28d9;
+  --panel-bg: #2d105f;
   --accent-a: #22d3ee;
   --accent-a-ink: #082f33;
   --accent-b: #fde047;
@@ -74,9 +81,10 @@
 @theme inline {
   --color-background: var(--bg-3);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-body);
   --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-numeric: var(--font-numeric);
 }
 
 body {
@@ -85,11 +93,34 @@ body {
 }
 
 .font-display {
-  font-family: var(--font-display), var(--font-geist-sans), sans-serif;
+  font-family: var(--font-display), sans-serif;
+}
+
+.font-body {
+  font-family: var(--font-body), sans-serif;
+}
+
+.font-numeric {
+  font-family: var(--font-numeric), monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 .arcade-bg {
-  background-image: linear-gradient(to bottom right, var(--bg-1), var(--bg-2), var(--bg-3));
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1.5px),
+    linear-gradient(to bottom right, var(--bg-1), var(--bg-2), var(--bg-3));
+  background-size:
+    22px 22px,
+    cover;
+  background-attachment: fixed;
+}
+
+/* O "monitor" — moldura de cada tela, na mesma física chapada dos botões. */
+.panel {
+  background-color: var(--panel-bg);
+  border: 2.5px solid var(--accent-a);
+  border-radius: 1.5rem;
+  box-shadow: 4px 4px 0 var(--shadow-color);
 }
 
 @keyframes rise {

@@ -6,6 +6,8 @@ import type { BracketRound, OwnedGameWithMeta } from "@/lib/types";
 import type { RoomSnapshot } from "@/lib/rooms/service";
 import { subscribeToRoom } from "@/lib/supabase/realtime";
 import { Button } from "@/components/ui/Button";
+import { Panel } from "@/components/ui/Panel";
+import { Reveal, RevealItem } from "@/components/ui/Reveal";
 import PoolCuration from "./PoolCuration";
 import { SwipingPhase } from "./SwipingPhase";
 import { BracketView } from "./BracketView";
@@ -140,179 +142,214 @@ export default function RoomView({
   if (!isMember) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-5 px-6 text-center text-white">
-        <h1 className="font-display animate-rise text-3xl font-extrabold">Sala {code}</h1>
-        {snapshot.room.status === "curating_pool" ? (
-          <>
-            <p className="text-white/80">Você ainda não entrou nessa sala.</p>
-            <Button
-              onClick={handleJoin}
-              disabled={joining}
-              variant="primary"
-              className="px-8 py-3 text-lg"
-            >
-              {joining ? "Entrando..." : "Entrar na sala"}
-            </Button>
-          </>
-        ) : (
-          <p className="text-white/80">
-            Essa sala já começou e não dá mais pra entrar agora.
-          </p>
-        )}
+        <Reveal className="flex flex-col items-center gap-5">
+          <RevealItem>
+            <Panel className="p-8">
+              <h1 className="font-display text-3xl font-extrabold">
+                Sala <span className="font-numeric">{code}</span>
+              </h1>
+              {snapshot.room.status === "curating_pool" ? (
+                <div className="mt-4 flex flex-col items-center gap-4">
+                  <p className="text-white/80">Você ainda não entrou nessa sala.</p>
+                  <Button
+                    onClick={handleJoin}
+                    disabled={joining}
+                    variant="primary"
+                    className="px-8 py-3 text-lg"
+                  >
+                    {joining ? "Entrando..." : "Entrar na sala"}
+                  </Button>
+                </div>
+              ) : (
+                <p className="mt-4 text-white/80">
+                  Essa sala já começou e não dá mais pra entrar agora.
+                </p>
+              )}
+            </Panel>
+          </RevealItem>
+        </Reveal>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen px-6 py-10 text-white">
-      <div className="mx-auto max-w-3xl">
-        <header className="animate-rise mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-white/60">
-              {STATUS_LABEL[snapshot.room.status] ?? snapshot.room.status}
-            </p>
-            <h1 className="font-display text-3xl font-extrabold">Sala {code}</h1>
-          </div>
-          <Button onClick={copyCode} variant="secondary" className="px-4 py-2">
-            {copyLabel}
-          </Button>
-        </header>
+    <main className="min-h-screen px-4 py-10 text-white sm:px-6">
+      <Reveal className="mx-auto max-w-3xl">
+        <RevealItem>
+          <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="font-display text-3xl font-extrabold">
+                Sala <span className="font-numeric">{code}</span>
+              </h1>
+              <span
+                className="rounded-full px-3 py-1 text-xs font-bold"
+                style={{ backgroundColor: "var(--accent-b)", color: "var(--accent-b-ink)" }}
+              >
+                {STATUS_LABEL[snapshot.room.status] ?? snapshot.room.status}
+              </span>
+            </div>
+            <Button onClick={copyCode} variant="secondary" className="px-4 py-2">
+              {copyLabel}
+            </Button>
+          </header>
+        </RevealItem>
 
-        <ul className="animate-rise mb-6 flex flex-wrap gap-3 [animation-delay:80ms]">
-          {snapshot.members.map((member) => (
-            <li
-              key={member.userId}
-              className={`flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3 transition-colors ${
-                member.isHost
-                  ? "bg-[var(--accent-a)]/15 ring-1 ring-[var(--accent-a)]/40"
-                  : "bg-white/10"
-              }`}
-            >
-              <span className="relative">
-                {member.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={member.avatarUrl}
-                    alt=""
-                    className="h-7 w-7 rounded-full"
+        <RevealItem>
+          <ul className="mb-6 flex flex-wrap gap-3">
+            {snapshot.members.map((member) => (
+              <li
+                key={member.userId}
+                className={`flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3 transition-colors ${
+                  member.isHost
+                    ? "bg-[var(--accent-a)]/15 ring-1 ring-[var(--accent-a)]/40"
+                    : "bg-white/10"
+                }`}
+              >
+                <span className="relative">
+                  {member.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={member.avatarUrl}
+                      alt=""
+                      className="h-7 w-7 rounded-full"
+                    />
+                  ) : (
+                    <span className="block h-7 w-7 rounded-full bg-white/20" />
+                  )}
+                  <span
+                    className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 ${
+                      onlineIds.includes(member.userId) ? "bg-green-400" : "bg-white/30"
+                    }`}
+                    style={{ borderColor: "var(--bg-2)" }}
                   />
-                ) : (
-                  <span className="block h-7 w-7 rounded-full bg-white/20" />
-                )}
-                <span
-                  className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 ${
-                    onlineIds.includes(member.userId) ? "bg-green-400" : "bg-white/30"
-                  }`}
-                  style={{ borderColor: "var(--bg-2)" }}
-                />
-              </span>
-              <span className="text-sm font-semibold">
-                {member.personaName ?? "Jogador"}
-                {member.isHost && " 👑"}
-              </span>
-              {member.isReady && (
-                <span
-                  className="rounded-full bg-[var(--accent-a)]/20 px-2 py-0.5 text-xs font-bold"
-                  style={{ color: "var(--accent-a)" }}
-                >
-                  pronto
                 </span>
-              )}
-            </li>
-          ))}
-        </ul>
+                <span className="text-sm font-semibold">
+                  {member.personaName ?? "Jogador"}
+                  {member.isHost && " 👑"}
+                </span>
+                {member.isReady && (
+                  <span
+                    className="rounded-full bg-[var(--accent-a)]/20 px-2 py-0.5 text-xs font-bold"
+                    style={{ color: "var(--accent-a)" }}
+                  >
+                    pronto
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </RevealItem>
 
         {snapshot.room.status === "curating_pool" ? (
           <>
-            <div className="animate-rise mb-6 flex items-center justify-between gap-3 rounded-2xl bg-white/10 p-4 [animation-delay:120ms]">
-              <p className="text-sm text-white/80">
-                {snapshot.pool.length} jogo(s) no pool. Quando todo mundo marcar
-                &quot;pronto&quot; (com pelo menos 2 jogos), o swipe começa sozinho.
-              </p>
-              <Button
-                onClick={toggleReady}
-                variant={me?.isReady ? "secondary" : "accent-yellow"}
-                className="shrink-0 px-5 py-2.5"
+            <RevealItem>
+              <Panel
+                accent="b"
+                className="mb-6 flex items-center justify-between gap-3 p-4"
               >
-                {me?.isReady ? "Cancelar pronto" : "Estou pronto"}
-              </Button>
-            </div>
+                <p className="text-sm text-white/80">
+                  {snapshot.pool.length} jogo(s) no pool. Quando todo mundo marcar
+                  &quot;pronto&quot; (com pelo menos 2 jogos), o swipe começa sozinho.
+                </p>
+                <Button
+                  onClick={toggleReady}
+                  variant={me?.isReady ? "secondary" : "accent-yellow"}
+                  className="shrink-0 px-5 py-2.5"
+                >
+                  {me?.isReady ? "Cancelar pronto" : "Estou pronto"}
+                </Button>
+              </Panel>
+            </RevealItem>
 
             {snapshot.pool.length > 0 && (
-              <div className="mb-6">
-                <h2 className="font-display mb-2 text-sm font-bold uppercase tracking-wide text-white/70">
-                  Pool da sala
-                </h2>
-                <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <AnimatePresence initial={false}>
-                    {snapshot.pool.map((game) => (
-                      <motion.li
-                        key={game.appid}
-                        layout
-                        initial={{ opacity: 0, scale: 0.9, y: 8 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 28 }}
-                        className="flex items-center gap-3 rounded-xl bg-white/10 p-2.5"
-                      >
-                        {game.iconUrl || game.headerImage ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={game.headerImage ?? game.iconUrl ?? undefined}
-                            alt=""
-                            className="h-9 w-14 rounded-md object-cover"
-                          />
-                        ) : (
-                          <div className="h-9 w-14 rounded-md bg-white/20" />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold">{game.name}</p>
-                          <p className="text-xs text-white/50">
-                            add. por {game.addedByName ?? "alguém"}
-                          </p>
-                        </div>
-                        {game.addedByUserId === currentUserId && (
-                          <button
-                            onClick={() => handleRemove(game.appid)}
-                            className="shrink-0 text-xs text-white/50 transition-colors hover:text-red-300"
-                          >
-                            remover
-                          </button>
-                        )}
-                      </motion.li>
-                    ))}
-                  </AnimatePresence>
-                </ul>
-              </div>
+              <RevealItem>
+                <div className="mb-6">
+                  <h2 className="font-display mb-2 text-sm font-bold uppercase tracking-wide text-white/70">
+                    Pool da sala
+                  </h2>
+                  <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <AnimatePresence initial={false}>
+                      {snapshot.pool.map((game) => (
+                        <motion.li
+                          key={game.appid}
+                          layout
+                          initial={{ opacity: 0, scale: 0.9, y: 8 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                          className="flex items-center gap-3 rounded-lg border-l-[3px] bg-black/20 p-2.5"
+                          style={{ borderLeftColor: "var(--accent-a)" }}
+                        >
+                          {game.iconUrl || game.headerImage ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={game.headerImage ?? game.iconUrl ?? undefined}
+                              alt=""
+                              className="h-9 w-14 rounded-md object-cover"
+                            />
+                          ) : (
+                            <div className="h-9 w-14 rounded-md bg-white/20" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold">{game.name}</p>
+                            <p className="text-xs text-white/50">
+                              add. por {game.addedByName ?? "alguém"}
+                            </p>
+                          </div>
+                          {game.addedByUserId === currentUserId && (
+                            <button
+                              onClick={() => handleRemove(game.appid)}
+                              className="shrink-0 text-xs text-white/50 transition-colors hover:text-red-300"
+                            >
+                              remover
+                            </button>
+                          )}
+                        </motion.li>
+                      ))}
+                    </AnimatePresence>
+                  </ul>
+                </div>
+              </RevealItem>
             )}
 
-            <PoolCuration
-              code={code}
-              poolAppids={poolAppids}
-              myLibrary={myLibrary}
-              onAdded={refetch}
-            />
+            <RevealItem>
+              <PoolCuration
+                code={code}
+                poolAppids={poolAppids}
+                myLibrary={myLibrary}
+                onAdded={refetch}
+              />
+            </RevealItem>
           </>
         ) : snapshot.room.status === "swiping" ? (
-          <SwipingPhase
-            key={swipeRound}
-            code={code}
-            pool={snapshot.pool}
-            members={snapshot.members}
-            matches={snapshot.matches}
-            currentUserId={currentUserId}
-            initialSwipedAppids={mySwipedAppids}
-            onRetry={handleSwipeRetry}
-          />
+          <RevealItem>
+            <SwipingPhase
+              key={swipeRound}
+              code={code}
+              pool={snapshot.pool}
+              members={snapshot.members}
+              matches={snapshot.matches}
+              currentUserId={currentUserId}
+              initialSwipedAppids={mySwipedAppids}
+              onRetry={handleSwipeRetry}
+            />
+          </RevealItem>
         ) : snapshot.room.status === "bracket" ? (
-          <BracketView code={code} rounds={bracketRounds} onVoted={refetch} />
+          <RevealItem>
+            <BracketView code={code} rounds={bracketRounds} onVoted={refetch} />
+          </RevealItem>
         ) : snapshot.room.status === "finished" && snapshot.winnerGame ? (
-          <WinnerReveal game={snapshot.winnerGame} />
+          <RevealItem>
+            <WinnerReveal game={snapshot.winnerGame} />
+          </RevealItem>
         ) : (
-          <div className="rounded-2xl bg-white/10 p-8 text-center">
-            <p className="font-display text-lg font-bold">Preparando o resultado...</p>
-          </div>
+          <RevealItem>
+            <Panel className="p-8 text-center">
+              <p className="font-display text-lg font-bold">Preparando o resultado...</p>
+            </Panel>
+          </RevealItem>
         )}
-      </div>
+      </Reveal>
     </main>
   );
 }

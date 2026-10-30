@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import type { MatchedGameView, PoolGameView, RoomMemberView } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
+import { Panel } from "@/components/ui/Panel";
 import { getThemeAccentColors } from "@/lib/theme";
 import { SwipeCard, type SwipeCardHandle } from "./SwipeCard";
 
@@ -92,7 +93,10 @@ export function SwipingPhase({
     <div>
       <div className="mb-4 flex items-center justify-between text-sm text-white/70">
         <span>
-          Seu progresso: {Math.min(myProgress, total)} de {total}
+          Seu progresso:{" "}
+          <span className="font-numeric">
+            {Math.min(myProgress, total)} de {total}
+          </span>
         </span>
       </div>
       <div className="mb-6 h-2 overflow-hidden rounded-full bg-white/10">
@@ -145,15 +149,15 @@ export function SwipingPhase({
           </div>
         </>
       ) : !allMembersDone ? (
-        <div className="rounded-2xl bg-white/10 p-8 text-center">
+        <Panel accent="b" className="p-8 text-center">
           <p className="font-display text-lg font-bold">Você terminou de swipar!</p>
           <p className="mt-2 text-sm text-white/70">
             Esperando:{" "}
             {unfinishedOthers.map((m) => m.personaName ?? "alguém").join(", ")}
           </p>
-        </div>
+        </Panel>
       ) : matches.length === 0 ? (
-        <div className="rounded-2xl bg-white/10 p-8 text-center">
+        <Panel className="p-8 text-center">
           <p className="font-display text-lg font-bold">Ninguém bateu o olho em nada 😅</p>
           <p className="mt-2 text-sm text-white/70">
             Ninguém curtiu o mesmo jogo dessa vez. Bora tentar de novo?
@@ -166,11 +170,11 @@ export function SwipingPhase({
           >
             {retrying ? "Reiniciando..." : "Tentar de novo"}
           </Button>
-        </div>
+        </Panel>
       ) : (
-        <div className="rounded-2xl bg-white/10 p-8 text-center">
+        <Panel className="p-8 text-center">
           <p className="font-display text-lg font-bold">Fechando o resultado...</p>
-        </div>
+        </Panel>
       )}
     </div>
   );

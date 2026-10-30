@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { OwnedGameWithMeta } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
+import { Panel } from "@/components/ui/Panel";
 
 type SortKey = "playtime" | "recent" | "name";
 
@@ -65,20 +66,21 @@ export default function GameLibrary({ games }: { games: OwnedGameWithMeta[] }) {
       {syncError && <p className="mb-3 text-sm text-red-300">{syncError}</p>}
 
       {sorted.length === 0 ? (
-        <div className="rounded-2xl bg-white/10 p-6 text-center text-white/80">
+        <Panel className="p-6 text-center text-white/80">
           <p>
             Não encontramos jogos na sua biblioteca. Isso costuma acontecer quando o
             campo &quot;Detalhes do jogo&quot; do seu perfil Steam está privado — ajuste
             em steamcommunity.com → Editar perfil → Privacidade, e depois clique em
             &quot;Atualizar biblioteca&quot;.
           </p>
-        </div>
+        </Panel>
       ) : (
-        <ul className="animate-rise grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {sorted.map((game) => (
             <li
               key={game.appid}
-              className="flex items-center gap-3 rounded-xl bg-white/10 p-3 transition-colors hover:bg-white/15"
+              className="flex items-center gap-3 rounded-lg border-l-[3px] bg-black/20 p-3 transition-colors hover:bg-black/30"
+              style={{ borderLeftColor: "var(--accent-a)" }}
             >
               {game.iconUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element

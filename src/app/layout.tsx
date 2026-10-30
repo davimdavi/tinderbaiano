@@ -1,19 +1,8 @@
 import type { Metadata } from "next";
-import { Baloo_2, Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
+import { Baloo_2, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ArcadeBackdrop } from "@/components/ui/ArcadeBackdrop";
 import { ThemePicker } from "@/components/ui/ThemePicker";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 const baloo2 = Baloo_2({
   variable: "--font-display",
@@ -21,36 +10,33 @@ const baloo2 = Baloo_2({
   weight: ["600", "700", "800"],
 });
 
+const hankenGrotesk = Hanken_Grotesk({
+  variable: "--font-body",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-numeric",
+  subsets: ["latin"],
+  weight: ["500", "700"],
+});
+
 export const metadata: Metadata = {
   title: "TinderBaiano",
   description: "Dá match no jogo certo pra jogar com a galera.",
 };
 
-// Aplica o tema salvo (localStorage) antes da primeira pintura, pra não dar aquele
-// "flash" da paleta padrão antes de trocar pra escolhida pelo jogador.
-const THEME_INIT_SCRIPT = `
-try {
-  var t = localStorage.getItem("tb-theme");
-  if (t) document.documentElement.setAttribute("data-theme", t);
-} catch (e) {}
-`;
-
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pt-BR"
-      className={`${geistSans.variable} ${geistMono.variable} ${baloo2.variable} h-full antialiased`}
-      // O script de tema (abaixo) seta data-theme antes da hidratação a partir do
-      // localStorage, que o servidor não tem como saber — essa divergência é
-      // esperada, então avisamos o React pra não reclamar dela.
+      className={`${baloo2.variable} ${hankenGrotesk.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      // O ThemePicker reaplica o tema salvo (localStorage) assim que monta, antes
+      // que o servidor tenha como saber qual é — essa divergência é esperada.
       suppressHydrationWarning
     >
-      <body className="arcade-bg flex min-h-full flex-col">
-        <Script
-          id="theme-init"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
-        />
+      <body className="arcade-bg flex min-h-full flex-col font-body">
         <ArcadeBackdrop />
         <div className="relative z-10 flex min-h-full flex-1 flex-col">{children}</div>
         <ThemePicker />

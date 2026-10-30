@@ -9,6 +9,7 @@ import {
   type PanInfo,
 } from "framer-motion";
 import type { PoolGameView } from "@/lib/types";
+import { GameArt } from "@/components/ui/GameArt";
 
 const SWIPE_THRESHOLD = 110;
 const VELOCITY_THRESHOLD = 500;
@@ -54,8 +55,6 @@ export const SwipeCard = forwardRef<
     }
   }
 
-  const image = game.headerImage ?? game.iconUrl;
-
   return (
     <motion.div
       className="absolute inset-0 flex touch-none select-none flex-col overflow-hidden rounded-3xl bg-white/10 shadow-2xl"
@@ -69,12 +68,12 @@ export const SwipeCard = forwardRef<
       whileTap={isTop ? { cursor: "grabbing" } : undefined}
     >
       <div className="relative flex-1 bg-black/30">
-        {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt="" className="h-full w-full object-cover" draggable={false} />
-        ) : (
-          <div className="flex h-full items-center justify-center text-white/40">Sem imagem</div>
-        )}
+        <GameArt
+          appid={game.appid}
+          headerImage={game.headerImage}
+          iconUrl={game.iconUrl}
+          className="h-full w-full object-cover"
+        />
         <motion.div
           style={{ opacity: likeOpacity, borderColor: "var(--accent-a)", color: "var(--accent-a)" }}
           className="absolute left-4 top-4 -rotate-12 rounded-xl border-4 px-3 py-1 text-xl font-extrabold"

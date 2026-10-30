@@ -6,6 +6,8 @@ import {
   isRoomMember,
 } from "@/lib/rooms/service";
 import { getOwnedGamesForUser } from "@/lib/steam/library";
+import { Panel } from "@/components/ui/Panel";
+import { Reveal, RevealItem } from "@/components/ui/Reveal";
 import RoomView from "./RoomView";
 
 export default async function RoomPage({
@@ -24,8 +26,14 @@ export default async function RoomPage({
   if (!snapshot) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center text-white">
-        <h1 className="text-3xl font-extrabold">Sala não encontrada</h1>
-        <p className="text-white/70">Confere se o código está certo.</p>
+        <Reveal>
+          <RevealItem>
+            <Panel className="p-8">
+              <h1 className="font-display text-3xl font-extrabold">Sala não encontrada</h1>
+              <p className="mt-2 text-white/70">Confere se o código está certo.</p>
+            </Panel>
+          </RevealItem>
+        </Reveal>
       </main>
     );
   }

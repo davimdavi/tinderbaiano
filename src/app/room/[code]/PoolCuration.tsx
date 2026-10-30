@@ -6,6 +6,7 @@ import type { OwnedGameWithMeta } from "@/lib/types";
 import type { StoreSearchResult } from "@/lib/steam/storeApi";
 import type { RecommendedGame } from "@/lib/discovery/recommendations";
 import { Button } from "@/components/ui/Button";
+import { Panel } from "@/components/ui/Panel";
 import { ArcadeLoader } from "@/components/ui/ArcadeLoader";
 
 type Tab = "library" | "recommend" | "search";
@@ -50,9 +51,10 @@ function AddableGameRow({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className={`flex items-center gap-3 rounded-xl bg-white/10 p-3 transition-colors hover:bg-white/15 ${
+      className={`flex items-center gap-3 rounded-lg border-l-[3px] bg-black/20 p-3 transition-colors hover:bg-black/30 ${
         wide ? "sm:col-span-2" : ""
       }`}
+      style={{ borderLeftColor: "var(--accent-b)" }}
     >
       {imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -142,10 +144,10 @@ function LibraryTab({
 
   if (sorted.length === 0) {
     return (
-      <p className="rounded-2xl bg-white/10 p-6 text-center text-white/80">
+      <Panel className="p-6 text-center text-white/80">
         Sua biblioteca ainda não sincronizou. Vai no seu perfil e clica em &quot;Atualizar
         biblioteca&quot;.
-      </p>
+      </Panel>
     );
   }
 
@@ -213,7 +215,7 @@ function SearchTab({
         value={term}
         onChange={(e) => setTerm(e.target.value)}
         placeholder="Nome do jogo..."
-        className="mb-4 w-full rounded-full bg-white/20 px-4 py-2.5 text-sm text-white placeholder-white/50 outline-none transition-colors focus:bg-white/30 focus:ring-2 focus:ring-[var(--accent-b)]"
+        className="mb-4 w-full rounded-full bg-black/25 px-4 py-2.5 text-sm text-white placeholder-white/40 outline-none transition-colors focus:bg-black/35 focus:ring-2 focus:ring-[var(--accent-b)]"
       />
       {loading && <ArcadeLoader label="Procurando na Steam..." />}
       {!loading && trimmedTerm.length >= 2 && visibleResults.length === 0 && (
@@ -304,15 +306,15 @@ function RecommendTab({
   }
 
   if (error) {
-    return <p className="rounded-2xl bg-white/10 p-6 text-center text-white/80">{error}</p>;
+    return <Panel className="p-6 text-center text-white/80">{error}</Panel>;
   }
 
   if (!sorted || sorted.length === 0) {
     return (
-      <p className="rounded-2xl bg-white/10 p-6 text-center text-white/80">
+      <Panel className="p-6 text-center text-white/80">
         Ainda não achei recomendações — adiciona alguns jogos na biblioteca de vocês
         primeiro, ou tenta de novo daqui a pouco.
-      </p>
+      </Panel>
     );
   }
 
