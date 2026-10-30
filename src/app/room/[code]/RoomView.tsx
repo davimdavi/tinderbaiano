@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import type { OwnedGameWithMeta } from "@/lib/types";
+import type { BracketRound, OwnedGameWithMeta } from "@/lib/types";
 import type { RoomSnapshot } from "@/lib/rooms/service";
 import { subscribeToRoom } from "@/lib/supabase/realtime";
 import { Button } from "@/components/ui/Button";
 import PoolCuration from "./PoolCuration";
 import { SwipingPhase } from "./SwipingPhase";
+import { BracketView } from "./BracketView";
 import { WinnerReveal } from "./WinnerReveal";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -39,6 +40,7 @@ export default function RoomView({
   const [copyLabel, setCopyLabel] = useState("Copiar código");
   const [mySwipedAppids, setMySwipedAppids] = useState(initialMySwipedAppids);
   const [swipeRound, setSwipeRound] = useState(0);
+  const [bracketRounds, setBracketRounds] = useState<BracketRound[]>([]);
 
   const refetch = useCallback(async () => {
     const res = await fetch(`/api/rooms/${code}`);
@@ -49,9 +51,18 @@ export default function RoomView({
       members: data.members,
       pool: data.pool,
       matches: data.matches,
+      winnerGame: data.winnerGame,
     });
     setIsMember(data.isMember);
     setMySwipedAppids(data.mySwipedAppids ?? []);
+
+    if (data.room.status === "bracket") {
+      const bracketRes = await fetch(`/api/rooms/${code}/bracket`);
+      if (bracketRes.ok) {
+        const bracketData = await bracketRes.json();
+        setBracketRounds(bracketData.rounds ?? []);
+      }
+    }
   }, [code]);
 
   useEffect(() => {
@@ -63,6 +74,16 @@ export default function RoomView({
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMember, snapshot.room.id, currentUserId]);
+
+  // Se a página carregar já com a sala em mata-mata (ex: recarregou no meio da
+  // partida), busca o estado do bracket uma vez — o resto é pego pelo refetch().
+  useEffect(() => {
+    if (initialSnapshot.room.status !== "bracket") return;
+    fetch(`/api/rooms/${code}/bracket`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => data && setBracketRounds(data.rounds ?? []));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Rede de segurança além do Realtime: a entrega de eventos nem sempre é
   // instantânea, então re-busca o snapshot de tempos em tempos enquanto a sala
@@ -278,37 +299,13 @@ export default function RoomView({
             initialSwipedAppids={mySwipedAppids}
             onRetry={handleSwipeRetry}
           />
-        ) : snapshot.room.status === "finished" && snapshot.matches[0] ? (
-          <WinnerReveal game={snapshot.matches[0]} />
+        ) : snapshot.room.status === "bracket" ? (
+          <BracketView code={code} rounds={bracketRounds} onVoted={refetch} />
+        ) : snapshot.room.status === "finished" && snapshot.winnerGame ? (
+          <WinnerReveal game={snapshot.winnerGame} />
         ) : (
           <div className="rounded-2xl bg-white/10 p-8 text-center">
-            <p className="font-display text-lg font-bold">
-              Deu match em {snapshot.matches.length} jogo(s)! 🎉
-            </p>
-            <p className="mt-2 text-sm text-white/70">
-              A fase de mata-mata ainda está sendo construída — por enquanto, aqui está
-              o que bateu o olho de todo mundo:
-            </p>
-            <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {snapshot.matches.map((game) => (
-                <li
-                  key={game.appid}
-                  className="flex items-center gap-3 rounded-xl bg-white/10 p-2.5 text-left"
-                >
-                  {game.headerImage || game.iconUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={game.headerImage ?? game.iconUrl ?? undefined}
-                      alt=""
-                      className="h-9 w-14 rounded-md object-cover"
-                    />
-                  ) : (
-                    <div className="h-9 w-14 rounded-md bg-white/20" />
-                  )}
-                  <p className="text-sm font-semibold">{game.name}</p>
-                </li>
-              ))}
-            </ul>
+            <p className="font-display text-lg font-bold">Preparando o resultado...</p>
           </div>
         )}
       </div>

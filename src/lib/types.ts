@@ -45,6 +45,7 @@ export type DbRoom = {
   host_user_id: string;
   status: RoomStatus;
   created_at: string;
+  winner_appid: number | null;
 };
 
 export type DbRoomMember = {
@@ -98,4 +99,45 @@ export type MatchedGameView = {
   name: string;
   iconUrl: string | null;
   headerImage: string | null;
+};
+
+export type BracketMatchStatus = "voting" | "decided";
+
+export type DbBracketMatch = {
+  id: string;
+  room_id: string;
+  round_number: number;
+  slot_index: number;
+  game_a_appid: number | null;
+  game_b_appid: number | null;
+  winner_appid: number | null;
+  status: BracketMatchStatus;
+  voting_ends_at: string | null;
+  created_at: string;
+};
+
+export type DbBracketVote = {
+  bracket_match_id: string;
+  user_id: string;
+  voted_appid: number;
+  voted_at: string;
+};
+
+export type BracketMatchView = {
+  id: string;
+  roundNumber: number;
+  slotIndex: number;
+  gameA: MatchedGameView | null;
+  gameB: MatchedGameView | null;
+  winnerAppid: number | null;
+  status: BracketMatchStatus;
+  votingEndsAt: string | null;
+  votesA: number;
+  votesB: number;
+  myVote: number | null;
+};
+
+export type BracketRound = {
+  roundNumber: number;
+  matches: BracketMatchView[];
 };

@@ -7,11 +7,21 @@ export type RoomRealtimeHandlers = {
   onPresenceChange?: (onlineUserIds: string[]) => void;
 };
 
+const WATCHED_TABLES = [
+  "rooms",
+  "room_members",
+  "room_pool_games",
+  "swipes",
+  "room_matches",
+  "bracket_matches",
+  "bracket_votes",
+] as const;
+
 /**
- * Assina mudanças em tempo real de uma sala (rooms/room_members/room_pool_games) +
- * presença (quem está com a aba aberta agora). Chama `onChange` pra qualquer mudança
- * nas três tabelas — mais simples e robusto do que tentar aplicar o diff no cliente:
- * a gente só re-busca o snapshot da sala quando algo muda.
+ * Assina mudanças em tempo real de tudo que diz respeito a uma sala (lobby, pool,
+ * swipes, matches, mata-mata) + presença (quem está com a aba aberta agora). Chama
+ * `onChange` pra qualquer mudança nessas tabelas — mais simples e robusto do que
+ * tentar aplicar o diff no cliente: a gente só re-busca o snapshot quando algo muda.
  */
 export function subscribeToRoom(
   roomId: string,
@@ -23,32 +33,16 @@ export function subscribeToRoom(
     config: { presence: { key: userId } },
   });
 
+  for (const table of WATCHED_TABLES) {
+    const filterColumn = table === "rooms" ? "id" : "room_id";
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table, filter: `${filterColumn}=eq.${roomId}` },
+      () => handlers.onChange?.()
+    );
+  }
+
   channel
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "rooms", filter: `id=eq.${roomId}` },
-      () => handlers.onChange?.()
-    )
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "room_members",
-        filter: `room_id=eq.${roomId}`,
-      },
-      () => handlers.onChange?.()
-    )
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "room_pool_games",
-        filter: `room_id=eq.${roomId}`,
-      },
-      () => handlers.onChange?.()
-    )
     .on("presence", { event: "sync" }, () => {
       const state = channel.presenceState();
       handlers.onPresenceChange?.(Object.keys(state));

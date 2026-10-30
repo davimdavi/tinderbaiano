@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { generateRoomCode } from "@/lib/rooms/code";
+import { startBracket } from "@/lib/bracket/service";
 import type { DbRoom, MatchedGameView, PoolGameView, RoomMemberView } from "@/lib/types";
 
 export async function createRoom(hostUserId: string): Promise<{ id: string; code: string }> {
@@ -73,7 +74,7 @@ export async function getRoomByCode(code: string) {
   const admin = getSupabaseAdmin();
   const { data, error } = await admin
     .from("rooms")
-    .select("id, code, status, host_user_id, created_at")
+    .select("id, code, status, host_user_id, created_at, winner_appid")
     .eq("code", code.toUpperCase())
     .maybeSingle();
   if (error) throw new Error(`Falha ao buscar sala: ${error.message}`);
@@ -220,6 +221,7 @@ export type RoomSnapshot = {
   members: RoomMemberView[];
   pool: PoolGameView[];
   matches: MatchedGameView[];
+  winnerGame: MatchedGameView | null;
 };
 
 export async function getRoomSnapshot(code: string): Promise<RoomSnapshot | null> {
@@ -287,7 +289,24 @@ export async function getRoomSnapshot(code: string): Promise<RoomSnapshot | null
     headerImage: row.games?.header_image ?? null,
   }));
 
-  return { room: room as DbRoom, members, pool, matches };
+  let winnerGame: MatchedGameView | null = null;
+  if (room.winner_appid) {
+    const { data: winnerRow } = await admin
+      .from("games")
+      .select("appid, name, icon_url, header_image")
+      .eq("appid", room.winner_appid)
+      .maybeSingle();
+    if (winnerRow) {
+      winnerGame = {
+        appid: winnerRow.appid as number,
+        name: winnerRow.name as string,
+        iconUrl: (winnerRow.icon_url as string) ?? null,
+        headerImage: (winnerRow.header_image as string) ?? null,
+      };
+    }
+  }
+
+  return { room: room as DbRoom, members, pool, matches, winnerGame };
 }
 
 export async function getUserSwipedAppids(
@@ -390,15 +409,18 @@ async function maybeFinalizeSwiping(roomId: string): Promise<void> {
   );
   if (!allDone) return;
 
-  const { count: matchCount } = await admin
+  const { data: matchedGames, count: matchCount } = await admin
     .from("room_matches")
-    .select("appid", { count: "exact", head: true })
+    .select("appid", { count: "exact" })
     .eq("room_id", roomId);
 
-  if (matchCount === 1) {
-    await admin.from("rooms").update({ status: "finished" }).eq("id", roomId);
+  if (matchCount === 1 && matchedGames?.[0]) {
+    await admin
+      .from("rooms")
+      .update({ status: "finished", winner_appid: matchedGames[0].appid })
+      .eq("id", roomId);
   } else if (matchCount && matchCount >= 2) {
-    await admin.from("rooms").update({ status: "bracket" }).eq("id", roomId);
+    await startBracket(roomId);
   }
 }
 
