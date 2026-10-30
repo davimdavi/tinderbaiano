@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { OwnedGameWithMeta } from "@/lib/types";
+import { Button } from "@/components/ui/Button";
 
 type SortKey = "playtime" | "recent" | "name";
 
@@ -46,26 +47,19 @@ export default function GameLibrary({ games }: { games: OwnedGameWithMeta[] }) {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2">
           {SORT_OPTIONS.map(([key, label]) => (
-            <button
+            <Button
               key={key}
               onClick={() => setSortKey(key)}
-              className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
-                sortKey === key
-                  ? "bg-white text-purple-900"
-                  : "bg-white/10 hover:bg-white/20"
-              }`}
+              variant={sortKey === key ? "primary" : "secondary"}
+              className="px-3 py-1.5"
             >
               {label}
-            </button>
+            </Button>
           ))}
         </div>
-        <button
-          onClick={handleSync}
-          disabled={syncing}
-          className="rounded-full bg-fuchsia-500 px-3 py-1.5 text-sm font-semibold transition hover:bg-fuchsia-400 disabled:opacity-50"
-        >
+        <Button onClick={handleSync} disabled={syncing} variant="accent-blue" className="px-3 py-1.5">
           {syncing ? "Sincronizando..." : "Atualizar biblioteca"}
-        </button>
+        </Button>
       </div>
 
       {syncError && <p className="mb-3 text-sm text-red-300">{syncError}</p>}
@@ -80,11 +74,11 @@ export default function GameLibrary({ games }: { games: OwnedGameWithMeta[] }) {
           </p>
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <ul className="animate-rise grid grid-cols-1 gap-3 sm:grid-cols-2">
           {sorted.map((game) => (
             <li
               key={game.appid}
-              className="flex items-center gap-3 rounded-xl bg-white/10 p-3"
+              className="flex items-center gap-3 rounded-xl bg-white/10 p-3 transition-colors hover:bg-white/15"
             >
               {game.iconUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element

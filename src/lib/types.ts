@@ -36,3 +36,44 @@ export type OwnedGameWithMeta = {
   playtimeForever: number;
   playtime2Weeks: number;
 };
+
+export type RoomStatus = "curating_pool" | "swiping" | "bracket" | "finished";
+
+export type DbRoom = {
+  id: string;
+  code: string;
+  host_user_id: string;
+  status: RoomStatus;
+  created_at: string;
+};
+
+export type DbRoomMember = {
+  room_id: string;
+  user_id: string;
+  joined_at: string;
+  is_ready: boolean;
+};
+
+export type DbRoomPoolGame = {
+  room_id: string;
+  appid: number;
+  added_by_user: string | null;
+  added_at: string;
+};
+
+export type RoomMemberView = {
+  userId: string;
+  personaName: string | null;
+  avatarUrl: string | null;
+  isReady: boolean;
+  isHost: boolean;
+};
+
+export type PoolGameView = {
+  appid: number;
+  name: string;
+  iconUrl: string | null;
+  headerImage: string | null;
+  addedByUserId: string | null;
+  addedByName: string | null;
+};

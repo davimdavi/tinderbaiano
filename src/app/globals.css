@@ -1,8 +1,21 @@
 @import "tailwindcss";
 
+/*
+  Identidade visual: arcade moderno (não retrô) — céu roxo/magenta como base,
+  com azul e amarelo como cores de destaque. Visual único e assumido (sem tema
+  claro), no espírito de um painel de arcade bem desenhado: cantos arredondados,
+  gradientes limpos, tipografia bold e arredondada.
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #2a1152;
+  --foreground: #ffffff;
+
+  --color-arcade-pink: #ec4899;
+  --color-arcade-fuchsia: #c026d3;
+  --color-arcade-purple: #7e22ce;
+  --color-arcade-indigo: #312e81;
+  --color-arcade-blue: #38bdf8;
+  --color-arcade-yellow: #facc15;
 }
 
 @theme inline {
@@ -10,17 +23,54 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-display);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-display), var(--font-geist-sans), sans-serif;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-rise {
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes blob-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(3%, -4%) scale(1.08);
+  }
+  66% {
+    transform: translate(-3%, 3%) scale(0.95);
+  }
+}
+.animate-blob {
+  animation: blob-float 14s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
