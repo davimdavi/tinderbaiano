@@ -10,18 +10,15 @@ export default async function Home({
   const { login } = await searchParams;
 
   return (
-    <main className="relative flex min-h-screen flex-1 flex-col items-center justify-center gap-8 overflow-hidden bg-gradient-to-br from-fuchsia-700 via-purple-800 to-indigo-900 px-6 text-center text-white">
-      <div
-        aria-hidden
-        className="animate-blob pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-sky-400/30 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="animate-blob pointer-events-none absolute -right-20 bottom-10 h-80 w-80 rounded-full bg-yellow-400/20 blur-3xl [animation-delay:4s]"
-      />
-
+    <main className="flex min-h-screen flex-1 flex-col items-center justify-center gap-8 px-6 text-center text-white">
       <div className="animate-rise relative">
-        <h1 className="font-display bg-gradient-to-r from-pink-300 via-white to-sky-300 bg-clip-text text-5xl font-extrabold tracking-tight text-transparent sm:text-6xl">
+        <h1
+          className="font-display bg-clip-text text-5xl font-extrabold tracking-tight text-transparent sm:text-6xl"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, var(--accent-c), #ffffff, var(--accent-b))",
+          }}
+        >
           TinderBaiano
         </h1>
         <p className="mt-4 max-w-md text-lg text-white/80">

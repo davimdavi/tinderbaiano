@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import type { MatchedGameView, PoolGameView, RoomMemberView } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
+import { getThemeAccentColors } from "@/lib/theme";
 import { SwipeCard, type SwipeCardHandle } from "./SwipeCard";
 
 export function SwipingPhase({
@@ -43,7 +44,7 @@ export function SwipingPhase({
         particleCount: 90,
         spread: 75,
         origin: { y: 0.6 },
-        colors: ["#facc15", "#38bdf8", "#ec4899"],
+        colors: getThemeAccentColors(),
       });
     }
     prevMatchCount.current = matches.length;
@@ -96,7 +97,11 @@ export function SwipingPhase({
       </div>
       <div className="mb-6 h-2 overflow-hidden rounded-full bg-white/10">
         <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-sky-400 via-fuchsia-400 to-yellow-400"
+          className="h-full rounded-full"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, var(--accent-b), var(--accent-c), var(--accent-a))",
+          }}
           animate={{ width: `${total > 0 ? (Math.min(myProgress, total) / total) * 100 : 0}%` }}
           transition={{ type: "spring", stiffness: 200, damping: 30 }}
         />

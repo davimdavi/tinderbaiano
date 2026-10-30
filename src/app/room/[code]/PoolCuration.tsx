@@ -100,13 +100,13 @@ export default function PoolCuration({
 
   return (
     <div>
-      <div className="mb-4 flex gap-2 overflow-x-auto">
+      <div className="mb-4 flex flex-wrap gap-2">
         {TABS.map(([key, label]) => (
           <Button
             key={key}
             onClick={() => setTab(key)}
             variant={tab === key ? "primary" : "secondary"}
-            className="shrink-0 px-3 py-1.5"
+            className="px-3 py-1.5"
           >
             {label}
           </Button>
@@ -213,7 +213,7 @@ function SearchTab({
         value={term}
         onChange={(e) => setTerm(e.target.value)}
         placeholder="Nome do jogo..."
-        className="mb-4 w-full rounded-full bg-white/20 px-4 py-2.5 text-sm text-white placeholder-white/50 outline-none transition-colors focus:bg-white/30 focus:ring-2 focus:ring-sky-400"
+        className="mb-4 w-full rounded-full bg-white/20 px-4 py-2.5 text-sm text-white placeholder-white/50 outline-none transition-colors focus:bg-white/30 focus:ring-2 focus:ring-[var(--accent-b)]"
       />
       {loading && <ArcadeLoader label="Procurando na Steam..." />}
       {!loading && trimmedTerm.length >= 2 && visibleResults.length === 0 && (
@@ -240,6 +240,7 @@ function SearchTab({
 }
 
 type RecommendSort = "popular" | "recent";
+const PAGE_SIZE = 10;
 
 const RECOMMEND_LOADING_MESSAGES = [
   "Espiando o que a galera mais joga...",
@@ -260,6 +261,7 @@ function RecommendTab({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sort, setSort] = useState<RecommendSort>("popular");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loadingMessage] = useState(
     () =>
       RECOMMEND_LOADING_MESSAGES[
@@ -333,7 +335,7 @@ function RecommendTab({
         </Button>
       </div>
       <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {sorted.map((game) => (
+        {sorted.slice(0, visibleCount).map((game) => (
           <AddableGameRow
             key={game.appid}
             appid={game.appid}
@@ -355,6 +357,17 @@ function RecommendTab({
           />
         ))}
       </ul>
+      {visibleCount < sorted.length && (
+        <div className="mt-4 flex justify-center">
+          <Button
+            variant="secondary"
+            onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
+            className="px-5 py-2"
+          >
+            Mostrar mais ({sorted.length - visibleCount})
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

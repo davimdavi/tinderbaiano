@@ -76,8 +76,8 @@ export const SwipeCard = forwardRef<
           <div className="flex h-full items-center justify-center text-white/40">Sem imagem</div>
         )}
         <motion.div
-          style={{ opacity: likeOpacity }}
-          className="absolute left-4 top-4 -rotate-12 rounded-xl border-4 border-yellow-400 px-3 py-1 text-xl font-extrabold text-yellow-400"
+          style={{ opacity: likeOpacity, borderColor: "var(--accent-a)", color: "var(--accent-a)" }}
+          className="absolute left-4 top-4 -rotate-12 rounded-xl border-4 px-3 py-1 text-xl font-extrabold"
         >
           CURTI
         </motion.div>

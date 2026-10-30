@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 
-const CARD_COLORS = ["#ec4899", "#38bdf8", "#facc15"];
+const CARD_COLORS = ["var(--accent-c)", "var(--accent-b)", "var(--accent-a)"];
 
 /** Animação de "baralho embaralhando" pra usar no lugar de um spinner genérico. */
 export function ArcadeLoader({ label }: { label: string }) {

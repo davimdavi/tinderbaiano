@@ -1,11 +1,11 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { getAppDetails, type AppDetails } from "@/lib/steam/storeApi";
-import { getTagsForApp, getTrendingGames } from "@/lib/steam/steamSpy";
+import { getDiscoveryPool, getTagsForApp } from "@/lib/steam/steamSpy";
 
 const TOP_GAMES_PER_MEMBER = 8;
-const TOP_TAGS_TO_USE = 8;
-const TRENDING_POOL_SIZE = 100;
-const FINAL_RECOMMENDATION_COUNT = 16;
+const TOP_TAGS_TO_USE = 10;
+const DISCOVERY_POOL_SIZE = 200;
+const FINAL_RECOMMENDATION_COUNT = 48;
 const TAG_CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 dias
 
 export type RecommendedGame = {
@@ -85,21 +85,21 @@ export async function getGroupRecommendations(roomId: string): Promise<Recommend
     .map(([tag]) => tag);
   if (topTags.length === 0) return [];
 
-  // 2. Jogos em alta no momento que ninguém do grupo tem e que ainda não estão no pool.
-  const trending = await getTrendingGames(TRENDING_POOL_SIZE).catch(() => []);
-  const candidates = trending.filter(
+  // 2. Jogos em alta (agora ou historicamente) que ninguém do grupo tem e que
+  // ainda não estão no pool.
+  const discoveryPool = await getDiscoveryPool(DISCOVERY_POOL_SIZE).catch(() => []);
+  const candidates = discoveryPool.filter(
     (g) => !ownedByGroup.has(g.appid) && !inPool.has(g.appid)
   );
   if (candidates.length === 0) return [];
 
   // 3. Pra cada candidato, busca as próprias tags e descobre em quais "baldes" de
-  // tag do grupo ele se encaixa (pode entrar em mais de um).
+  // tag do grupo ele se encaixa (pode entrar em mais de um). Em lotes pequenos pra
+  // não martelar a SteamSpy com 200 chamadas simultâneas.
   const candidateTags = new Map<number, string[]>();
-  await Promise.all(
-    candidates.map(async (c) => {
-      candidateTags.set(c.appid, await getCachedOrFreshTags(c.appid, c.name));
-    })
-  );
+  await mapWithConcurrency(candidates, 15, async (c) => {
+    candidateTags.set(c.appid, await getCachedOrFreshTags(c.appid, c.name));
+  });
 
   const byPopularity = new Map(candidates.map((c) => [c.appid, c.popularityScore]));
   const bucketsByTag = new Map<string, number[]>(); // tag -> appids (ordenados por popularidade)
@@ -184,6 +184,21 @@ export async function getGroupRecommendations(roomId: string): Promise<Recommend
   );
 
   return enriched;
+}
+
+async function mapWithConcurrency<T>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<void>
+): Promise<void> {
+  let index = 0;
+  async function worker() {
+    while (index < items.length) {
+      const item = items[index++];
+      await fn(item);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
 }
 
 async function getCachedOrFreshTags(

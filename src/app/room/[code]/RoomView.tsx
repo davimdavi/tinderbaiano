@@ -139,7 +139,7 @@ export default function RoomView({
 
   if (!isMember) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-5 bg-gradient-to-br from-fuchsia-700 via-purple-800 to-indigo-900 px-6 text-center text-white">
+      <main className="flex min-h-screen flex-col items-center justify-center gap-5 px-6 text-center text-white">
         <h1 className="font-display animate-rise text-3xl font-extrabold">Sala {code}</h1>
         {snapshot.room.status === "curating_pool" ? (
           <>
@@ -163,7 +163,7 @@ export default function RoomView({
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-fuchsia-700 via-purple-800 to-indigo-900 px-6 py-10 text-white">
+    <main className="min-h-screen px-6 py-10 text-white">
       <div className="mx-auto max-w-3xl">
         <header className="animate-rise mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -183,7 +183,7 @@ export default function RoomView({
               key={member.userId}
               className={`flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3 transition-colors ${
                 member.isHost
-                  ? "bg-yellow-400/15 ring-1 ring-yellow-300/40"
+                  ? "bg-[var(--accent-a)]/15 ring-1 ring-[var(--accent-a)]/40"
                   : "bg-white/10"
               }`}
             >
@@ -199,9 +199,10 @@ export default function RoomView({
                   <span className="block h-7 w-7 rounded-full bg-white/20" />
                 )}
                 <span
-                  className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-purple-800 ${
+                  className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 ${
                     onlineIds.includes(member.userId) ? "bg-green-400" : "bg-white/30"
                   }`}
+                  style={{ borderColor: "var(--bg-2)" }}
                 />
               </span>
               <span className="text-sm font-semibold">
@@ -209,7 +210,10 @@ export default function RoomView({
                 {member.isHost && " 👑"}
               </span>
               {member.isReady && (
-                <span className="rounded-full bg-yellow-400/20 px-2 py-0.5 text-xs font-bold text-yellow-300">
+                <span
+                  className="rounded-full bg-[var(--accent-a)]/20 px-2 py-0.5 text-xs font-bold"
+                  style={{ color: "var(--accent-a)" }}
+                >
                   pronto
                 </span>
               )}

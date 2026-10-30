@@ -4,10 +4,12 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import type { MatchedGameView } from "@/lib/types";
+import { ButtonLink } from "@/components/ui/ButtonLink";
+import { getThemeAccentColors } from "@/lib/theme";
 
 export function WinnerReveal({ game }: { game: MatchedGameView }) {
   useEffect(() => {
-    const colors = ["#facc15", "#38bdf8", "#ec4899"];
+    const colors = getThemeAccentColors();
     confetti({ particleCount: 140, spread: 100, origin: { y: 0.4 }, colors });
     const timer = setTimeout(
       () => confetti({ particleCount: 80, spread: 120, origin: { y: 0.5 }, colors }),
@@ -23,7 +25,8 @@ export function WinnerReveal({ game }: { game: MatchedGameView }) {
       <motion.p
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="font-display text-sm font-bold uppercase tracking-widest text-yellow-300"
+        className="font-display text-sm font-bold uppercase tracking-widest"
+        style={{ color: "var(--accent-a)" }}
       >
         O jogo escolhido é...
       </motion.p>
@@ -50,17 +53,20 @@ export function WinnerReveal({ game }: { game: MatchedGameView }) {
       >
         {game.name}
       </motion.h2>
-      <motion.a
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.45 }}
-        href={`https://store.steampowered.com/app/${game.appid}`}
-        target="_blank"
-        rel="noreferrer"
-        className="rounded-full bg-sky-400 px-6 py-2.5 text-sm font-bold text-indigo-950 transition hover:scale-105"
       >
-        Ver na Steam
-      </motion.a>
+        <ButtonLink
+          href={`https://store.steampowered.com/app/${game.appid}`}
+          target="_blank"
+          rel="noreferrer"
+          variant="accent-blue"
+        >
+          Ver na Steam
+        </ButtonLink>
+      </motion.div>
     </div>
   );
 }

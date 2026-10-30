@@ -99,7 +99,9 @@ function BracketMatchCard({
     return (
       <div className="rounded-2xl bg-white/10 p-4 text-center">
         <GameTile game={match.gameA} highlighted />
-        <p className="mt-2 text-xs font-semibold text-yellow-300">passou direto (bye)</p>
+        <p className="mt-2 text-xs font-semibold" style={{ color: "var(--accent-a)" }}>
+          passou direto (bye)
+        </p>
       </div>
     );
   }
@@ -165,7 +167,9 @@ function BracketMatchCard({
           )}
         </>
       ) : (
-        <p className="mt-2 text-center text-xs font-semibold text-yellow-300">decidido</p>
+        <p className="mt-2 text-center text-xs font-semibold" style={{ color: "var(--accent-a)" }}>
+          decidido
+        </p>
       )}
     </div>
   );
@@ -191,7 +195,11 @@ function GameTile({
     <motion.div
       animate={{ scale: highlighted ? 1.03 : 1, opacity: faded ? 0.45 : 1 }}
       className={`relative flex-1 overflow-hidden rounded-xl ${
-        highlighted ? "ring-2 ring-yellow-400" : myVote ? "ring-2 ring-sky-400" : ""
+        highlighted
+          ? "ring-2 ring-[var(--accent-a)]"
+          : myVote
+            ? "ring-2 ring-[var(--accent-b)]"
+            : ""
       }`}
     >
       {image ? (
@@ -204,7 +212,10 @@ function GameTile({
         <p className="truncate text-xs font-semibold text-white">{game.name}</p>
       </div>
       {typeof votes === "number" && votes > 0 && (
-        <span className="absolute right-1 top-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-yellow-300">
+        <span
+          className="absolute right-1 top-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[10px] font-bold"
+          style={{ color: "var(--accent-a)" }}
+        >
           {votes}
         </span>
       )}

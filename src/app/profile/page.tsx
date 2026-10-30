@@ -23,7 +23,7 @@ export default async function ProfilePage() {
   const games = await getOwnedGamesForUser(session.userId);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-fuchsia-700 via-purple-800 to-indigo-900 px-6 py-10 text-white">
+    <main className="min-h-screen px-6 py-10 text-white">
       <div className="mx-auto max-w-3xl">
         <header className="animate-rise mb-8 flex items-center gap-4">
           {user?.avatar_url && (

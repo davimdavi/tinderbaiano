@@ -1,25 +1,78 @@
 @import "tailwindcss";
 
 /*
-  Identidade visual: arcade moderno (não retrô) — céu roxo/magenta como base,
-  com azul e amarelo como cores de destaque. Visual único e assumido (sem tema
-  claro), no espírito de um painel de arcade bem desenhado: cantos arredondados,
-  gradientes limpos, tipografia bold e arredondada.
+  Identidade visual: arcade moderno (não retrô) — fundo em gradiente, bordas e
+  sombras "chapadas" (tipo botão físico de fliperama), tipografia bold e
+  arredondada. 5 paletas trocáveis em tempo real via [data-theme] em <html>,
+  todas desenhadas com o mesmo esqueleto de tokens (fundo em 3 tons + 3 cores
+  de destaque A/B/C, cada uma com sua cor de texto legível por cima).
 */
 :root {
-  --background: #2a1152;
   --foreground: #ffffff;
+  --shadow-color: rgba(10, 4, 28, 0.55);
 
-  --color-arcade-pink: #ec4899;
-  --color-arcade-fuchsia: #c026d3;
-  --color-arcade-purple: #7e22ce;
-  --color-arcade-indigo: #312e81;
-  --color-arcade-blue: #38bdf8;
-  --color-arcade-yellow: #facc15;
+  /* Fliperama (padrão): roxo/magenta + amarelo, azul e rosa */
+  --bg-1: #a21caf;
+  --bg-2: #6b21a8;
+  --bg-3: #1e1b4b;
+  --accent-a: #facc15;
+  --accent-a-ink: #1e1b4b;
+  --accent-b: #38bdf8;
+  --accent-b-ink: #0c2a3d;
+  --accent-c: #f472b6;
+  --accent-c-ink: #4a0d2e;
+}
+
+:root[data-theme="noturno"] {
+  --bg-1: #1e1b4b;
+  --bg-2: #312e81;
+  --bg-3: #0c4a6e;
+  --accent-a: #22d3ee;
+  --accent-a-ink: #082f33;
+  --accent-b: #f472b6;
+  --accent-b-ink: #4a0d2e;
+  --accent-c: #a3e635;
+  --accent-c-ink: #1a2e05;
+}
+
+:root[data-theme="tutti-frutti"] {
+  --bg-1: #ea580c;
+  --bg-2: #be123c;
+  --bg-3: #881337;
+  --accent-a: #facc15;
+  --accent-a-ink: #431407;
+  --accent-b: #fb7185;
+  --accent-b-ink: #4c0519;
+  --accent-c: #2dd4bf;
+  --accent-c-ink: #042f2e;
+}
+
+:root[data-theme="mar-aberto"] {
+  --bg-1: #0f766e;
+  --bg-2: #115e59;
+  --bg-3: #164e63;
+  --accent-a: #a3e635;
+  --accent-a-ink: #1a2e05;
+  --accent-b: #fb923c;
+  --accent-b-ink: #431407;
+  --accent-c: #fde047;
+  --accent-c-ink: #422006;
+}
+
+:root[data-theme="choque-rosa"] {
+  --bg-1: #db2777;
+  --bg-2: #a21caf;
+  --bg-3: #6d28d9;
+  --accent-a: #22d3ee;
+  --accent-a-ink: #082f33;
+  --accent-b: #fde047;
+  --accent-b-ink: #422006;
+  --accent-c: #a3e635;
+  --accent-c-ink: #1a2e05;
 }
 
 @theme inline {
-  --color-background: var(--background);
+  --color-background: var(--bg-3);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -27,12 +80,16 @@
 }
 
 body {
-  background: var(--background);
+  background: var(--bg-3);
   color: var(--foreground);
 }
 
 .font-display {
   font-family: var(--font-display), var(--font-geist-sans), sans-serif;
+}
+
+.arcade-bg {
+  background-image: linear-gradient(to bottom right, var(--bg-1), var(--bg-2), var(--bg-3));
 }
 
 @keyframes rise {
@@ -63,6 +120,30 @@ body {
 }
 .animate-blob {
   animation: blob-float 14s ease-in-out infinite;
+}
+
+@keyframes drift {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(2.5%, -6%) rotate(8deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+.animate-drift {
+  animation: drift 9s ease-in-out infinite;
+}
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin-slow {
+  animation: spin-slow 18s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

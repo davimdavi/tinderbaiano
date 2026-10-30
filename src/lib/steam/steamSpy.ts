@@ -31,23 +31,49 @@ function parseOwnersLowerBound(owners?: string): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-/** Jogos em alta nas últimas 2 semanas, segundo a SteamSpy (até 100 entradas). */
-export async function getTrendingGames(limit = 100): Promise<SteamSpyCandidate[]> {
+async function fetchTop100(request: "top100in2weeks" | "top100forever"): Promise<SteamSpyCandidate[]> {
   const url = new URL(STEAMSPY_BASE);
-  url.searchParams.set("request", "top100in2weeks");
+  url.searchParams.set("request", request);
 
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
-    throw new Error(`SteamSpy (top100in2weeks) falhou (status ${res.status})`);
+    throw new Error(`SteamSpy (${request}) falhou (status ${res.status})`);
   }
   const data = (await res.json()) as Record<string, SteamSpyGameEntry>;
 
-  return Object.values(data)
-    .map((g) => ({
-      appid: g.appid,
-      name: g.name,
-      popularityScore: parseOwnersLowerBound(g.owners) + (g.positive ?? 0),
-    }))
+  return Object.values(data).map((g) => ({
+    appid: g.appid,
+    name: g.name,
+    popularityScore: parseOwnersLowerBound(g.owners) + (g.positive ?? 0),
+  }));
+}
+
+/** Jogos em alta nas últimas 2 semanas, segundo a SteamSpy (até 100 entradas). */
+export async function getTrendingGames(limit = 100): Promise<SteamSpyCandidate[]> {
+  const games = await fetchTop100("top100in2weeks");
+  return games.sort((a, b) => b.popularityScore - a.popularityScore).slice(0, limit);
+}
+
+/**
+ * Pool de descoberta mais amplo: cruza "em alta agora" com "mais populares de
+ * sempre" (dedupe por appid, mantendo a maior pontuação) — pega jogos bons que não
+ * necessariamente estão bombando nas últimas 2 semanas, tipo clássicos de nicho.
+ */
+export async function getDiscoveryPool(limit = 200): Promise<SteamSpyCandidate[]> {
+  const [trending, allTime] = await Promise.all([
+    fetchTop100("top100in2weeks"),
+    fetchTop100("top100forever"),
+  ]);
+
+  const byAppid = new Map<number, SteamSpyCandidate>();
+  for (const game of [...trending, ...allTime]) {
+    const existing = byAppid.get(game.appid);
+    if (!existing || existing.popularityScore < game.popularityScore) {
+      byAppid.set(game.appid, game);
+    }
+  }
+
+  return [...byAppid.values()]
     .sort((a, b) => b.popularityScore - a.popularityScore)
     .slice(0, limit);
 }

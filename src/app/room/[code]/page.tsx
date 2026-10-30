@@ -23,7 +23,7 @@ export default async function RoomPage({
 
   if (!snapshot) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gradient-to-br from-fuchsia-700 via-purple-800 to-indigo-900 px-6 text-center text-white">
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center text-white">
         <h1 className="text-3xl font-extrabold">Sala não encontrada</h1>
         <p className="text-white/70">Confere se o código está certo.</p>
       </main>
