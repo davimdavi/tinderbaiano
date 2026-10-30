@@ -207,7 +207,14 @@ type MemberRow = {
 type PoolRow = {
   appid: number;
   added_by_user: string | null;
-  games: { name: string; icon_url: string | null; header_image: string | null } | null;
+  games: {
+    name: string;
+    icon_url: string | null;
+    header_image: string | null;
+    genres: string[] | null;
+    release_date: string | null;
+    is_free: boolean | null;
+  } | null;
   users: { persona_name: string | null } | null;
 };
 
@@ -259,7 +266,9 @@ export async function getRoomSnapshot(code: string): Promise<RoomSnapshot | null
 
   const { data: poolRows, error: poolError } = await admin
     .from("room_pool_games")
-    .select("appid, added_by_user, games(name, icon_url, header_image), users(persona_name)")
+    .select(
+      "appid, added_by_user, games(name, icon_url, header_image, genres, release_date, is_free), users(persona_name)"
+    )
     .eq("room_id", room.id)
     .order("added_at", { ascending: true })
     .returns<PoolRow[]>();
@@ -270,6 +279,9 @@ export async function getRoomSnapshot(code: string): Promise<RoomSnapshot | null
     name: row.games?.name ?? `App ${row.appid}`,
     iconUrl: row.games?.icon_url ?? null,
     headerImage: row.games?.header_image ?? null,
+    genres: row.games?.genres ?? null,
+    releaseDate: row.games?.release_date ?? null,
+    isFree: row.games?.is_free ?? null,
     addedByUserId: row.added_by_user,
     addedByName: row.users?.persona_name ?? null,
   }));

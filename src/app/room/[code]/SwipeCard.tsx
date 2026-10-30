@@ -42,6 +42,9 @@ export const SwipeCard = forwardRef<
 
   useImperativeHandle(ref, () => ({ decide }));
 
+  const releaseYear = game.releaseDate ? game.releaseDate.slice(0, 4) : null;
+  const topGenres = (game.genres ?? []).slice(0, 3);
+
   function handleDragEnd(_: unknown, info: PanInfo) {
     const liked = info.offset.x > SWIPE_THRESHOLD || info.velocity.x > VELOCITY_THRESHOLD;
     const disliked =
@@ -67,7 +70,7 @@ export const SwipeCard = forwardRef<
       onDragEnd={isTop ? handleDragEnd : undefined}
       whileTap={isTop ? { cursor: "grabbing" } : undefined}
     >
-      <div className="relative flex-1 bg-black/30">
+      <div className="relative min-h-0 flex-1 bg-black/30">
         <GameArt
           appid={game.appid}
           headerImage={game.headerImage}
@@ -86,8 +89,35 @@ export const SwipeCard = forwardRef<
         >
           PASSO
         </motion.div>
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-          <p className="font-display text-xl font-bold text-white">{game.name}</p>
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 pt-12">
+          <p className="font-display text-xl font-bold text-white">
+            {game.name}
+            {releaseYear && (
+              <span className="font-numeric ml-2 text-base font-normal text-white/70">
+                {releaseYear}
+              </span>
+            )}
+          </p>
+          {(topGenres.length > 0 || game.isFree) && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {game.isFree && (
+                <span
+                  className="rounded-full border px-2.5 py-0.5 text-xs font-bold"
+                  style={{ borderColor: "var(--accent-a)", color: "var(--accent-a)" }}
+                >
+                  Grátis
+                </span>
+              )}
+              {topGenres.map((genre) => (
+                <span
+                  key={genre}
+                  className="rounded-full border border-white/35 bg-black/30 px-2.5 py-0.5 text-xs font-semibold text-white/85"
+                >
+                  {genre}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

@@ -76,6 +76,9 @@ export type PoolGameView = {
   name: string;
   iconUrl: string | null;
   headerImage: string | null;
+  genres: string[] | null;
+  releaseDate: string | null;
+  isFree: boolean | null;
   addedByUserId: string | null;
   addedByName: string | null;
 };

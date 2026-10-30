@@ -8,6 +8,7 @@ import {
   isRoomMember,
   removeGameFromPool,
 } from "@/lib/rooms/service";
+import { getAppDetails } from "@/lib/steam/storeApi";
 
 const addSchema = z.object({
   appid: z.number().int().positive(),
@@ -49,8 +50,25 @@ export async function POST(
   }
 
   try {
-    await ensureGameCached(parsed.data);
-    await addGameToPool(room.id, parsed.data.appid, session.userId);
+    let game = parsed.data;
+    // A biblioteca e a busca simples não trazem gênero/ano/preço (só a
+    // aba de recomendados já busca isso) — completa com o appdetails da Steam
+    // antes de cachear, pra sempre ter o "bio" do jogo no card de swipe.
+    if (game.genres == null && game.releaseDate == null && game.isFree == null) {
+      const details = await getAppDetails(game.appid).catch(() => null);
+      if (details) {
+        game = {
+          ...game,
+          headerImage: game.headerImage ?? details.headerImage,
+          genres: details.genres,
+          releaseDate: details.releaseDate,
+          isFree: details.isFree,
+        };
+      }
+    }
+
+    await ensureGameCached(game);
+    await addGameToPool(room.id, game.appid, session.userId);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[api/rooms/pool POST] erro:", error);
