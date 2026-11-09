@@ -106,7 +106,7 @@ export async function DELETE(
   }
 
   try {
-    await removeGameFromPool(room.id, appid);
+    await removeGameFromPool(room.id, appid, session.userId);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[api/rooms/pool DELETE] erro:", error);

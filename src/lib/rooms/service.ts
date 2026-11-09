@@ -125,6 +125,11 @@ export async function ensureGameCached(game: CacheableGame): Promise<void> {
   if (error) throw new Error(`Falha ao cachear jogo: ${error.message}`);
 }
 
+/**
+ * Cada jogador tem sua própria linha pro mesmo jogo (chave é room+appid+quem
+ * adicionou) — assim dois amigos conseguem adicionar o mesmo jogo cada um no seu
+ * próprio pool, em vez do segundo clique não fazer nada.
+ */
 export async function addGameToPool(
   roomId: string,
   appid: number,
@@ -135,18 +140,23 @@ export async function addGameToPool(
     .from("room_pool_games")
     .upsert(
       { room_id: roomId, appid, added_by_user: addedByUserId },
-      { onConflict: "room_id,appid", ignoreDuplicates: true }
+      { onConflict: "room_id,appid,added_by_user", ignoreDuplicates: true }
     );
   if (error) throw new Error(`Falha ao adicionar jogo ao pool: ${error.message}`);
 }
 
-export async function removeGameFromPool(roomId: string, appid: number): Promise<void> {
+export async function removeGameFromPool(
+  roomId: string,
+  appid: number,
+  userId: string
+): Promise<void> {
   const admin = getSupabaseAdmin();
   const { error } = await admin
     .from("room_pool_games")
     .delete()
     .eq("room_id", roomId)
-    .eq("appid", appid);
+    .eq("appid", appid)
+    .eq("added_by_user", userId);
   if (error) throw new Error(`Falha ao remover jogo do pool: ${error.message}`);
 }
 
@@ -189,11 +199,14 @@ async function maybeStartSwiping(roomId: string): Promise<void> {
   if (membersError || !members || members.length === 0) return;
   if (!members.every((m) => m.is_ready)) return;
 
-  const { count } = await admin
+  // Conta jogos DISTINTOS, não linhas — dois jogadores podem ter adicionado o
+  // mesmo jogo cada um no seu pool, e isso ainda conta como só 1 jogo pro swipe.
+  const { data: poolRows } = await admin
     .from("room_pool_games")
-    .select("appid", { count: "exact", head: true })
+    .select("appid")
     .eq("room_id", roomId);
-  if (!count || count < 2) return;
+  const distinctGames = new Set((poolRows ?? []).map((r) => r.appid)).size;
+  if (distinctGames < 2) return;
 
   await admin.from("rooms").update({ status: "swiping" }).eq("id", roomId);
 }
@@ -292,10 +305,20 @@ export async function getRoomSnapshot(
       : poolQuery.eq("added_by_user", "__none__");
   }
 
-  const { data: poolRows, error: poolError } = await poolQuery.returns<PoolRow[]>();
+  const { data: rawPoolRows, error: poolError } = await poolQuery.returns<PoolRow[]>();
   if (poolError) throw new Error(`Falha ao buscar pool: ${poolError.message}`);
 
-  const pool: PoolGameView[] = (poolRows ?? []).map((row) => ({
+  // A partir da fase de swipe o pool já foi unido de verdade (cada jogador pode
+  // ter adicionado o mesmo jogo na própria linha) — aqui dedupe por appid pra não
+  // mostrar o mesmo jogo duas vezes no deck.
+  const seenAppids = new Set<number>();
+  const poolRows = (rawPoolRows ?? []).filter((row) => {
+    if (seenAppids.has(row.appid)) return false;
+    seenAppids.add(row.appid);
+    return true;
+  });
+
+  const pool: PoolGameView[] = poolRows.map((row) => ({
     appid: row.appid,
     name: row.games?.name ?? `App ${row.appid}`,
     iconUrl: row.games?.icon_url ?? null,
@@ -415,10 +438,13 @@ async function maybeFinalizeSwiping(roomId: string): Promise<void> {
     .single();
   if (!room || room.status !== "swiping") return;
 
-  const { count: poolCount } = await admin
+  // Jogos DISTINTOS no pool, não linhas (ver maybeStartSwiping) — é esse número
+  // que bate com o tamanho real do deck que cada jogador recebe pra swipar.
+  const { data: poolGameRows } = await admin
     .from("room_pool_games")
-    .select("appid", { count: "exact", head: true })
+    .select("appid")
     .eq("room_id", roomId);
+  const poolCount = new Set((poolGameRows ?? []).map((r) => r.appid)).size;
   if (!poolCount) return;
 
   const { data: members } = await admin
