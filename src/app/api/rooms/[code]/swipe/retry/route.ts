@@ -31,7 +31,7 @@ export async function POST(
     );
   }
 
-  const snapshot = await getRoomSnapshot(code);
+  const snapshot = await getRoomSnapshot(code, session.userId);
   if (snapshot && snapshot.matches.length > 0) {
     return NextResponse.json(
       { error: "Já tem match nessa sala, não dá pra reiniciar." },

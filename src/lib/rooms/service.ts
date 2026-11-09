@@ -231,7 +231,17 @@ export type RoomSnapshot = {
   winnerGame: MatchedGameView | null;
 };
 
-export async function getRoomSnapshot(code: string): Promise<RoomSnapshot | null> {
+/**
+ * `viewerUserId` é quem está pedindo o snapshot. Enquanto a sala ainda está
+ * montando o pool, cada jogador só pode ver os jogos que ELE MESMO adicionou —
+ * os jogos dos outros ficam anônimos até todo mundo marcar "pronto", quando os
+ * pools de cada um se juntam automaticamente (maybeStartSwiping) num só pool pra
+ * valer, que aí sim todo mundo vê igual na fase de swipe.
+ */
+export async function getRoomSnapshot(
+  code: string,
+  viewerUserId: string | null
+): Promise<RoomSnapshot | null> {
   const admin = getSupabaseAdmin();
   const room = await getRoomByCode(code);
   if (!room) return null;
@@ -264,14 +274,25 @@ export async function getRoomSnapshot(code: string): Promise<RoomSnapshot | null
     swipedCount: swipedCountByUser.get(row.user_id) ?? 0,
   }));
 
-  const { data: poolRows, error: poolError } = await admin
+  let poolQuery = admin
     .from("room_pool_games")
     .select(
       "appid, added_by_user, games(name, icon_url, header_image, genres, release_date, is_free), users(persona_name)"
     )
     .eq("room_id", room.id)
-    .order("added_at", { ascending: true })
-    .returns<PoolRow[]>();
+    .order("added_at", { ascending: true });
+
+  // Antes do swipe começar, ninguém vê o pool dos outros nem quanto eles já
+  // juntaram — só a Steam/busca pra montar o próprio. Depois que a sala vira
+  // 'swiping' os pools já foram unidos de verdade no banco, então todo mundo
+  // passa a ver o mesmo pool (os jogos de todos).
+  if (room.status === "curating_pool") {
+    poolQuery = viewerUserId
+      ? poolQuery.eq("added_by_user", viewerUserId)
+      : poolQuery.eq("added_by_user", "__none__");
+  }
+
+  const { data: poolRows, error: poolError } = await poolQuery.returns<PoolRow[]>();
   if (poolError) throw new Error(`Falha ao buscar pool: ${poolError.message}`);
 
   const pool: PoolGameView[] = (poolRows ?? []).map((row) => ({

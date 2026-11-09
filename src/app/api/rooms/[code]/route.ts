@@ -12,7 +12,7 @@ export async function GET(
   }
 
   const { code } = await ctx.params;
-  const snapshot = await getRoomSnapshot(code);
+  const snapshot = await getRoomSnapshot(code, session.userId);
   if (!snapshot) {
     return NextResponse.json({ error: "Sala não encontrada." }, { status: 404 });
   }

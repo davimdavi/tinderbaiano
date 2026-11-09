@@ -21,7 +21,7 @@ export default async function RoomPage({
   }
 
   const { code } = await params;
-  const snapshot = await getRoomSnapshot(code);
+  const snapshot = await getRoomSnapshot(code, session.userId);
 
   if (!snapshot) {
     return (

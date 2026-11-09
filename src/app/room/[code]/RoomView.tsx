@@ -103,17 +103,12 @@ export default function RoomView({
     await refetch();
   }
 
+  // Enquanto a sala está montando o pool, o servidor já manda só os jogos que EU
+  // mesmo adicionei (os dos outros ficam anônimos até todo mundo marcar pronto,
+  // quando os pools se juntam de verdade pro swipe) — ver getRoomSnapshot.
   const poolAppids = useMemo(
     () => new Set(snapshot.pool.map((g) => g.appid)),
     [snapshot.pool]
-  );
-
-  // Cada jogador só vê, na lista "seus jogos no pool", o que ele mesmo adicionou —
-  // os jogos dos outros continuam entrando no pool de verdade (e no swipe de todo
-  // mundo), só não aparecem nomeados aqui pra não virar bagunça/spoiler.
-  const myPoolGames = useMemo(
-    () => snapshot.pool.filter((g) => g.addedByUserId === currentUserId),
-    [snapshot.pool, currentUserId]
   );
 
   const me = snapshot.members.find((m) => m.userId === currentUserId);
@@ -256,8 +251,9 @@ export default function RoomView({
                 className="mb-6 flex items-center justify-between gap-3 p-4"
               >
                 <p className="text-sm text-white/80">
-                  {snapshot.pool.length} jogo(s) no pool. Quando todo mundo marcar
-                  &quot;pronto&quot; (com pelo menos 2 jogos), o swipe começa sozinho.
+                  Adicione seus jogos e marque &quot;pronto&quot; quando quiser. Os
+                  jogos de cada um ficam em segredo até todo mundo marcar — aí o
+                  swipe começa sozinho com tudo junto.
                 </p>
                 <Button
                   onClick={toggleReady}
@@ -269,7 +265,7 @@ export default function RoomView({
               </Panel>
             </RevealItem>
 
-            {myPoolGames.length > 0 && (
+            {snapshot.pool.length > 0 && (
               <RevealItem>
                 <div className="mb-6">
                   <h2 className="font-display mb-2 text-sm font-bold uppercase tracking-wide text-white/70">
@@ -277,7 +273,7 @@ export default function RoomView({
                   </h2>
                   <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <AnimatePresence initial={false}>
-                      {myPoolGames.map((game) => (
+                      {snapshot.pool.map((game) => (
                         <motion.li
                           key={game.appid}
                           layout
