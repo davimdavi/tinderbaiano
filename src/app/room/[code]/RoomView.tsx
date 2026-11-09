@@ -108,6 +108,14 @@ export default function RoomView({
     [snapshot.pool]
   );
 
+  // Cada jogador só vê, na lista "seus jogos no pool", o que ele mesmo adicionou —
+  // os jogos dos outros continuam entrando no pool de verdade (e no swipe de todo
+  // mundo), só não aparecem nomeados aqui pra não virar bagunça/spoiler.
+  const myPoolGames = useMemo(
+    () => snapshot.pool.filter((g) => g.addedByUserId === currentUserId),
+    [snapshot.pool, currentUserId]
+  );
+
   const me = snapshot.members.find((m) => m.userId === currentUserId);
 
   async function handleJoin() {
@@ -261,15 +269,15 @@ export default function RoomView({
               </Panel>
             </RevealItem>
 
-            {snapshot.pool.length > 0 && (
+            {myPoolGames.length > 0 && (
               <RevealItem>
                 <div className="mb-6">
                   <h2 className="font-display mb-2 text-sm font-bold uppercase tracking-wide text-white/70">
-                    Pool da sala
+                    Seus jogos no pool
                   </h2>
                   <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <AnimatePresence initial={false}>
-                      {snapshot.pool.map((game) => (
+                      {myPoolGames.map((game) => (
                         <motion.li
                           key={game.appid}
                           layout
@@ -292,18 +300,13 @@ export default function RoomView({
                           )}
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-semibold">{game.name}</p>
-                            <p className="text-xs text-white/50">
-                              add. por {game.addedByName ?? "alguém"}
-                            </p>
                           </div>
-                          {game.addedByUserId === currentUserId && (
-                            <button
-                              onClick={() => handleRemove(game.appid)}
-                              className="shrink-0 text-xs text-white/50 transition-colors hover:text-red-300"
-                            >
-                              remover
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handleRemove(game.appid)}
+                            className="shrink-0 text-xs text-white/50 transition-colors hover:text-red-300"
+                          >
+                            remover
+                          </button>
                         </motion.li>
                       ))}
                     </AnimatePresence>
